@@ -3,11 +3,8 @@
 # ----------------------------- #
 
 import os
-os.environ["CURL_CA_BUNDLE"] = "/etc/ssl/certs/ca-certificates.crt"
-
 from urllib.parse import urlparse
 import requests
-from pystac import Catalog, Collection, STAC_IO
 import geopandas as gpd
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -18,15 +15,9 @@ from rasterio.mask import raster_geometry_mask
 from rasterio.windows import Window, bounds
 from shapely.geometry import Polygon, box
 import pdb
-
 # Tensorflow stuff
 import tensorflow as tf
-
 from tqdm import tqdm
-
-from __future__ import absolute_import, division, print_function, unicode_literals
-
-# from tensorflow_examples.models.pix2pix import pix2pix
 
 from IPython.display import clear_output
 import matplotlib.pyplot as plt
@@ -36,18 +27,6 @@ assert tf.version.VERSION[0] == '2', "Must use TF Version 2.x"
 
 metadata = pd.read_csv('https://s3.amazonaws.com/drivendata/data/60/public/train_metadata.csv')
 base_url = 'https://drivendata-competition-building-segmentation.s3-us-west-1.amazonaws.com/'
-
-def read_request_method(url):
-  """
-  Get STAC file from specified url.
-  """
-  parsed = urlparse(url)
-  if parsed.scheme.startswith('http'):
-      return requests.get(url).text
-  else: 
-      return STAC_IO.default_read_text_method(url)
-    
-STAC_IO.read_text_method = read_request_method
 
 # Idea: pull rasters + labels iteratively from dataframe,
 # then iterate over rasters in 1024x1024 blocks,
@@ -150,7 +129,7 @@ def generate_tf_tiles_from_scene(scene_id, metadata, limit=None, chunks=False, w
       if num_data > limit:
         break
 
-      for y_pos in range(0, scene.width, 1024)):
+      for y_pos in range(0, scene.width, 1024):
 
         num_data += 1
         if num_data > limit:
