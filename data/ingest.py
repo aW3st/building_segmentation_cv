@@ -32,6 +32,32 @@ base_url = 'https://drivendata-competition-building-segmentation.s3-us-west-1.am
 # then iterate over rasters in 1024x1024 blocks,
 # saving each block to a new file that includes the mask for each tile.
 
+
+def get_hosted_urls():
+  '''
+  Return metadata, base_url of hosted data.
+  '''
+  return metadata, base_url
+  
+
+def get_scene_and_labels(scene_id):
+  '''
+  Returns opened scene and labels
+  '''
+  # search for row
+  row = metadata[metadata['img_uri'].str.contains(scene_id)]
+
+  img_uri, label_uri = row['img_uri'].values[0], row['label_uri'].values[0]
+  base_url = 'https://drivendata-competition-building-segmentation.s3-us-west-1.amazonaws.com/'
+  scene_path = base_url+img_uri
+  scene = rasterio.open(scene_path)
+
+  labels = gpd.read_file(base_url+label_uri)
+  #transform to same CRS as raster file
+  labels = labels.to_crs(scene.crs.data)
+  return scene, labels
+
+
 def get_tile_at_idx(idx=10, x_pos=None, y_pos=None):
   '''
   Get a single tile from a scene at the specified index.
@@ -100,66 +126,59 @@ def generate_tf_tiles_from_scene(scene_id, metadata, limit=None, chunks=False, w
 
   if chunks:
       raise NotImplementedError
-
-  row = metadata[metadata['img_uri'].str.contains(scene_id)]
-  img_uri, label_uri = row['img_uri'].values[0], row['label_uri'].values[0]
-  base_url = 'https://drivendata-competition-building-segmentation.s3-us-west-1.amazonaws.com/'
-  
-  path = base_url+img_uri
     
-  with rasterio.open(path) as scene:
-    labels = gpd.read_file(base_url+label_uri)
-    #transform to same CRS as raster file
-    labels = labels.to_crs(scene.crs.data)
+  scene = get_scene(scene_id, metadata)
 
-    tiles = []
-    masks = []
-    x = []
-    y = []
+  tiles = []
+  masks = []
+  x = []
+  y = []
 
-    num_data = 0
-    skip_count = 0
+  num_data = 0
+  skip_count = 0
 
-    for x_pos in tqdm(range(0, scene.height, 1024), desc='x_pos' ,position=0):
-      print(num_data, 'tiles collected\n')
+  for x_pos in tqdm(range(0, scene.height, 1024), desc='x_pos' ,position=0):
+    print(num_data, 'tiles collected\n')
+    if num_data > limit:
+      break
+
+    for y_pos in range(0, scene.width, 1024):
+
+      num_data += 1
       if num_data > limit:
         break
 
-      for y_pos in range(0, scene.width, 1024):
-
-        num_data += 1
-        if num_data > limit:
-          break
-
-        # print(x_pos, y_pos)
-        tile = Tile(scene, label, xpos, ypos, scene_id)
-        if tile.tile is not None:
-          if tile.tile[0].shape != tile.mask.shape:
-            print(f'tile and shape mismatch at {(x_pos, y_pos)}: {tile[0].shape} != {mask.shape}')
-            continue
-
-        else:
-          skip_count += 1
+      # print(x_pos, y_pos)
+      tile = Tile(scene, label, xpos, ypos, scene_id)
+      if tile.tile is not None:
+        if tile.tile[0].shape != tile.mask.shape:
+          print(f'tile and shape mismatch at {(x_pos, y_pos)}: {tile[0].shape} != {mask.shape}')
           continue
-    
-    if write_to:
-        raise NotImplementedError
 
-    data = ({
-        'scene_id': [scene_id]*len(x),
-        'x': x,
-        'y': y,
-        'tile': tiles,
-        'mask': masks
-    })
+      else:
+        skip_count += 1
+        continue
+  
+  if write_to:
+      raise NotImplementedError
 
-    # pdb.set_trace()
+  data = ({
+      'scene_id': [scene_id]*len(x),
+      'x': x,
+      'y': y,
+      'tile': tiles,
+      'mask': masks
+  })
 
-    print(f'{num_data} of {num_data + skip_count} possible tile candidates stored')
-    # print(len(x))
-    dataset = tf.data.Dataset.from_tensor_slices(data)
+  # pdb.set_trace()
 
-    return dataset
+  print(f'{num_data} of {num_data + skip_count} possible tile candidates stored')
+  # print(len(x))
+  dataset = tf.data.Dataset.from_tensor_slices(data)
+
+  scene.close()
+
+  return dataset
 
 
 def ingest_scenes(scene_ids, path_out='/scenes'):
@@ -196,10 +215,10 @@ class Tile():
         if self.label_intersection.empty:
             self.mask = np.zeros((1, 1024, 1024))
             return self.mask
-        mask = rasterio.mask.raster_geometry_mask(scene, label_intersection, invert=True)
+        self.mask = rasterio.mask.raster_geometry_mask(self.scene, self.label_intersection, invert=True)
         # raster_geometry_mask returns an array of shape (img.height, img.width), need to slice the portion we want
-        self.mask = np.expand_dims(mask[0][self.ypos:self.ypos + 1024, self.xpos:self.xpos + 1024].astype(np.float32), axis=0)
-        return mask
+        self.mask = np.expand_dims(self.mask[0][self.ypos:self.ypos + 1024, self.xpos:self.xpos + 1024].astype(np.float32), axis=0)
+        return self.mask
 
     def plot(self, mask=False):
         fig, ax = plt.subplots(figsize=(15,15))
