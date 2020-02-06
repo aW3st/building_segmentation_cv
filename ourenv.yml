@@ -1,0 +1,19 @@
+name: SemanticSegmentation
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - requests
+  - jupyter
+  - geopandas
+  - matplotlib
+  - descartes
+  - rasterio
+  - boto3
+  - python=3.7
+  - tensorflow
+  - tqdm
+  - pillow
+  - pytest
+prefix: /home/alex/anaconda3/envs/SemanticSegmentation
+
