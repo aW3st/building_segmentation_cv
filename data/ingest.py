@@ -55,9 +55,6 @@ def get_tile_at_idx(idx=10, x_pos=None, y_pos=None):
   rasterio.plot.show(tile, transform=window_transform);
   return tile
 
-tile = get_tile_at_idx(10)
-print("tile shape:", tile.shape)
-
 
 def generate_tile_and_mask(scene, labels, x_pos, y_pos, plot=False):
     '''
@@ -124,7 +121,6 @@ def generate_tf_tiles_from_scene(scene_id, metadata, limit=None, chunks=False, w
     skip_count = 0
 
     for x_pos in tqdm(range(0, scene.height, 1024), desc='x_pos' ,position=0):
-
       print(num_data, 'tiles collected\n')
       if num_data > limit:
         break
@@ -136,17 +132,11 @@ def generate_tf_tiles_from_scene(scene_id, metadata, limit=None, chunks=False, w
           break
 
         # print(x_pos, y_pos)
-        tile, mask = generate_tile_and_mask(scene, labels, x_pos, y_pos)
-
-        if tile is not None:
-          # print(tile.shape, mask.shape)
-          if tile[0].shape != mask.shape:
+        tile = Tile(scene, label, xpos, ypos, scene_id)
+        if tile.tile is not None:
+          if tile.tile[0].shape != tile.mask.shape:
             print(f'tile and shape mismatch at {(x_pos, y_pos)}: {tile[0].shape} != {mask.shape}')
             continue
-          tiles.append(tile)
-          masks.append(mask)
-          x.append(x_pos)
-          y.append(y_pos)
 
         else:
           skip_count += 1
@@ -182,4 +172,53 @@ def ingest_scenes(scene_ids, path_out='/scenes'):
         scene_ids = list(scene_ids)
 
     for scene_id in scene_ids:
-        generate_tf_tiles_from_scene(scene_id, metadata, limit=10, write_to=path_out)    
+        generate_tf_tiles_from_scene(scene_id, metadata, limit=10, write_to=path_out)
+
+
+class Tile():
+
+    def __init__(self, scene, labels, xpos, ypos, scene_id):
+        self.scene = scene
+        self.labels = labels.to_crs(self.scene.crs.data)
+        self.xpos = xpos
+        self.ypos = ypos
+        self.scene_id = scene_id
+        self.window = Window(xpos, ypos, 1024,1024)
+        self.tile = self.scene.read(window=self.window)[:3]
+        self.window_transform = rasterio.windows.transform(self.window, self.scene.transform)
+
+    def get_mask(self):
+        window_coords = bounds(self.window, self.scene.transform)
+        boundingbox = box(*window_coords)
+        boolmask = self.labels.intersects(boundingbox)
+        self.label_intersection = self.labels.intersection(boundingbox)[boolmask]
+        #if there are no buildings in tile, mask should be all zeros
+        if self.label_intersection.empty:
+            self.mask = np.zeros((1, 1024, 1024))
+            return self.mask
+        mask = rasterio.mask.raster_geometry_mask(scene, label_intersection, invert=True)
+        # raster_geometry_mask returns an array of shape (img.height, img.width), need to slice the portion we want
+        self.mask = np.expand_dims(mask[0][self.ypos:self.ypos + 1024, self.xpos:self.xpos + 1024].astype(np.float32), axis=0)
+        return mask
+
+    def plot(self, mask=False):
+        fig, ax = plt.subplots(figsize=(15,15))
+        rasterio.plot.show(self.tile, transform = self.window_transform, ax = ax)
+        if mask:
+            if self.mask is None:
+                self.get_mask()
+            self.label_intersection.plot(ax=ax)
+
+    def write_data(self, path):
+        image = tf.keras.preprocessing.image.array_to_img(self.tile, data_format='channels_first')
+        mask = tf.keras.preprocessing.image.array_to_img(self.mask, data_format='channels_first')
+        image.save(path+self.scene_id+"_"+str(self.xpos)+"_"+str(self.ypos)+"_i.jpg")
+        mask.save(path+self.scene_id+"_"+str(self.xpos)+"_"+str(self.ypos)+"_mask.jpg")
+
+
+
+
+
+
+
+
