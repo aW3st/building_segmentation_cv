@@ -1,39 +1,111 @@
+# –––––––––––––––––––––––––––––––––––––––––
+# –––––––––––––––– MAIN––––––––––––––––––––
+# –––––––––––––––––––––––––––––––––––––––––
+
+# This module also is meant to make scratchpad work easier.
+# To this end, from interactive shell, run:
+#   `from scripts import *`
+# This will give you access to the top-level functions in this module.
+
 # Purpose of this file is to collect top-level management scripts into neat methods.
 # To test basic functions, run pytest from command-line on this file.
 
-
+import pytest
 from data.ingest import Tile, generate_tile_and_mask, get_hosted_urls, get_scene_and_labels
 from tqdm import tqdm
 
-def save_scene_tiles(scene_id, path='./data/train'):
-    '''Scan entire scene for a given scene id.'''
-    scene, labels = get_scene_and_labels(scene_id=scene_id)
+from pipeline.scan_scenes import update_scan_log, get_scene_ids
 
-    for x_pos in tqdm(range(0, scene.height, 1024), desc='x_pos' ,position=0):
-        for y_pos in range(0, scene.width, 1024):
-            tile = Tile(scene, labels, x_pos, y_pos, scene_id)
-            tile.get_mask()
-            if (tile.tile is not None) and (tile.mask is not None):
-                if tile.tile[0].shape != tile.mask[0].shape:
-                    print(f'tile and shape mismatch at {(x_pos, y_pos)}: {tile.tile[0].shape} != {tile.mask[0].shape}')
-                    continue
-                tile.write_data('data/train/')
+import json
+
+# Getting rid of those damn CRS warnings.
+import warnings
+warnings.simplefilter(action='ignore', category=FutureWarning)
+
+
+def collect_scene_information():
+    '''
+    Store certain scene information for better analytics.
+    '''
+    scene_ids = get_scene_ids()
+    scenes = {}
+
+    for scene_id in scene_ids:
+        print('collecting info on scene',scene_id)
+        scene, labels = get_scene_and_labels(scene_id)
+        scene_url = scene.name
+        scene_info = {
+            'scene_id':scene_id,
+            'shape': scene.shape,
+            'size': str(scene.shape[0]*scene.shape[1]),
+            'blocks': str(scene.shape[0]//1024 * scene.shape[1]//1024),
+            'lnglat': str(scene.lnglat()),
+            'scene_url': scene_url,
+            'city': scene_url.split('/')[-3],
+            'tier': scene_url.split('/')[-4].split('_')[-1]
+            }
+        scenes[scene_id] = scene_info
+
+    with open('data/scene_log.json','w') as file:
+        json.dump(scenes, file, ensure_ascii=False, indent=4)
+
+    return scenes
+
+
+def scan_scenes_to_local(limit=2):
+    '''
+    Scan scenes, ignoring ones already scanned.
+
+    Only scan as many scenes as limit.
+    '''
+
+    # Scenes scanned in this directory so far.
+    # confirm registry is properly updated with local scenes
+    scanned_scenes = update_scan_log()
+
+    # All available scenes.
+    scene_list = get_scene_ids()
+
+    # A json with a few pieces of helpful information.
+    scene_info = json.load('data/scene_log.json')
+
+    count = 0
+    for scene_id in scene_list:
+        if count > limit:
+            break
+        print('scene id', scene_id)
+        s_info = scene_info[scene_id]
+
+        blk_ct = s_info['blocks']
+
+        print(f'{scene_id} has {blk_ct} blocks')
+        if s_info['blocks'] < 1000:
+            if scene_id not in scanned_scenes:
+                save_scene_tiles(scene_id)
+                count += 1
             else:
-                continue
-    scene.close()
+                print('already scanned')
+        else:
+            continue
 
     return True
 
 
-def get_scene_ids():
-    
+def scratch():
+    update_scan_log()
+    get_scene_ids()
 
-save_scene_tiles('abe1a3')
 
 
-import pytest
+# ––––––––––––––––––––––––––––––––––––––––
+# –––––––– TESTING FUNCTIONS –––––––––––––
+# ––––––––––––––––––––––––––––––––––––––––
+#
+# Run tests from command line with pytest:
+#  $ pytest main.py
+#
+#  All functions with the test_ prefix below will run tests.
 
-from data.ingest import Tile, generate_tile_and_mask, get_hosted_urls, get_scene_and_labels
 
 def test_tile_and_mask_write():
     metadata, base_url = get_hosted_urls()

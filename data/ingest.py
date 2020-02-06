@@ -28,6 +28,9 @@ assert tf.version.VERSION[0] == '2', "Must use TF Version 2.x"
 metadata = pd.read_csv('https://s3.amazonaws.com/drivendata/data/60/public/train_metadata.csv')
 base_url = 'https://drivendata-competition-building-segmentation.s3-us-west-1.amazonaws.com/'
 
+import warnings
+warnings.simplefilter(action='ignore', category=FutureWarning)
+
 # Idea: pull rasters + labels iteratively from dataframe,
 # then iterate over rasters in 1024x1024 blocks,
 # saving each block to a new file that includes the mask for each tile.
@@ -198,7 +201,7 @@ class Tile():
 
     def __init__(self, scene, labels, xpos, ypos, scene_id):
         self.scene = scene
-        self.labels = labels.to_crs(self.scene.crs.data)
+        self.labels = labels.to_crs(self.scene.crs)
         self.xpos = xpos
         self.ypos = ypos
         self.scene_id = scene_id
