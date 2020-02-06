@@ -1,4 +1,4 @@
-name: SemanticSegmentation
+conname: SemanticSegmentation
 channels:
   - conda-forge
   - defaults
@@ -11,7 +11,7 @@ dependencies:
   - rasterio
   - boto3
   - python=3.7
-  - tensorflow
+  - tensorflow=2.1
   - tqdm
   - pillow
   - pytest
