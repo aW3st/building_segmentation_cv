@@ -42,7 +42,7 @@ def get_hosted_urls():
 
 def get_scene_and_labels(scene_id):
   '''
-  Returns opened scene and labels
+  Returns opened scene reader and labels
   '''
   # search for row
   row = metadata[metadata['img_uri'].str.contains(scene_id)]
@@ -54,7 +54,7 @@ def get_scene_and_labels(scene_id):
 
   labels = gpd.read_file(base_url+label_uri)
   #transform to same CRS as raster file
-  labels = labels.to_crs(scene.crs.data)
+  labels = labels.to_crs(scene.crs)
   return scene, labels
 
 
