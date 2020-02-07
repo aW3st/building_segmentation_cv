@@ -27,13 +27,16 @@ def update_scan_log():
         scanned_scenes = file.read().splitlines()
 
     # loop through directory and find out which scenes have been scanned
-    scanned_files = set(
+    scanned_scenes = set(
         [f.split('_')[0] for f in listdir('data/train')
          if isfile(join('data/train', f))]
          )
-    print(scanned_files)
+    print(scanned_scenes)
 
-    return None
+    with open('./data/local_scene_registry.txt', 'w') as file:
+        file.write(str(scanned_scenes))
+
+    return scanned_scenes
 
 
 def get_scene_ids():

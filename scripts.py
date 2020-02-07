@@ -11,7 +11,7 @@
 # To test basic functions, run pytest from command-line on this file.
 
 import pytest
-from data.ingest import Tile, generate_tile_and_mask, get_hosted_urls, get_scene_and_labels
+from data.ingest import get_scene_and_labels
 from tqdm import tqdm
 
 from pipeline.scan_scenes import update_scan_log, get_scene_ids

@@ -1,0 +1,938 @@
+{
+    "665946": {
+        "scene_id": "665946",
+        "shape": [
+            150147,
+            84466
+        ],
+        "size": "12682316502",
+        "blocks": "12043",
+        "lnglat": "(-0.23537189476772363, 5.633677745875293)",
+        "scene_url": "https://drivendata-competition-building-segmentation.s3-us-west-1.amazonaws.com/train_tier_1/acc/665946/665946.tif",
+        "city": "acc",
+        "tier": "1"
+    },
+    "a42435": {
+        "scene_id": "a42435",
+        "shape": [
+            39162,
+            57540
+        ],
+        "size": "2253381480",
+        "blocks": "2135",
+        "lnglat": "(-0.24157741106535752, 5.6135225842052705)",
+        "scene_url": "https://drivendata-competition-building-segmentation.s3-us-west-1.amazonaws.com/train_tier_1/acc/a42435/a42435.tif",
+        "city": "acc",
+        "tier": "1"
+    },
+    "ca041a": {
+        "scene_id": "ca041a",
+        "shape": [
+            77778,
+            65882
+        ],
+        "size": "5124170196",
+        "blocks": "4825",
+        "lnglat": "(-0.21648728126184752, 5.598111242040536)",
+        "scene_url": "https://drivendata-competition-building-segmentation.s3-us-west-1.amazonaws.com/train_tier_1/acc/ca041a/ca041a.tif",
+        "city": "acc",
+        "tier": "1"
+    },
+    "d41d81": {
+        "scene_id": "d41d81",
+        "shape": [
+            42719,
+            40868
+        ],
+        "size": "1745840092",
+        "blocks": "1636",
+        "lnglat": "(-0.19908004925217568, 5.583252127510706)",
+        "scene_url": "https://drivendata-competition-building-segmentation.s3-us-west-1.amazonaws.com/train_tier_1/acc/d41d81/d41d81.tif",
+        "city": "acc",
+        "tier": "1"
+    },
+    "401175": {
+        "scene_id": "401175",
+        "shape": [
+            15700,
+            18186
+        ],
+        "size": "285520200",
+        "blocks": "266",
+        "lnglat": "(-10.78868091839876, 6.335032888233943)",
+        "scene_url": "https://drivendata-competition-building-segmentation.s3-us-west-1.amazonaws.com/train_tier_1/mon/401175/401175.tif",
+        "city": "mon",
+        "tier": "1"
+    },
+    "493701": {
+        "scene_id": "493701",
+        "shape": [
+            21783,
+            22333
+        ],
+        "size": "486479739",
+        "blocks": "458",
+        "lnglat": "(-10.785522289575072, 6.330484048652214)",
+        "scene_url": "https://drivendata-competition-building-segmentation.s3-us-west-1.amazonaws.com/train_tier_1/mon/493701/493701.tif",
+        "city": "mon",
+        "tier": "1"
+    },
+    "207cc7": {
+        "scene_id": "207cc7",
+        "shape": [
+            14100,
+            19548
+        ],
+        "size": "275626800",
+        "blocks": "248",
+        "lnglat": "(-10.793184634604518, 6.329531489440114)",
+        "scene_url": "https://drivendata-competition-building-segmentation.s3-us-west-1.amazonaws.com/train_tier_1/mon/207cc7/207cc7.tif",
+        "city": "mon",
+        "tier": "1"
+    },
+    "f15272": {
+        "scene_id": "f15272",
+        "shape": [
+            17953,
+            20418
+        ],
+        "size": "366564354",
+        "blocks": "338",
+        "lnglat": "(-10.79735751155095, 6.328062802496796)",
+        "scene_url": "https://drivendata-competition-building-segmentation.s3-us-west-1.amazonaws.com/train_tier_1/mon/f15272/f15272.tif",
+        "city": "mon",
+        "tier": "1"
+    },
+    "abe1a3": {
+        "scene_id": "abe1a3",
+        "shape": [
+            7787,
+            7840
+        ],
+        "size": "61050080",
+        "blocks": "53",
+        "lnglat": "(11.886982749266384, -4.773549115840484)",
+        "scene_url": "https://drivendata-competition-building-segmentation.s3-us-west-1.amazonaws.com/train_tier_1/ptn/abe1a3/abe1a3.tif",
+        "city": "ptn",
+        "tier": "1"
+    },
+    "f49f31": {
+        "scene_id": "f49f31",
+        "shape": [
+            4185,
+            6605
+        ],
+        "size": "27641925",
+        "blocks": "25",
+        "lnglat": "(11.891888338162385, -4.801482911598252)",
+        "scene_url": "https://drivendata-competition-building-segmentation.s3-us-west-1.amazonaws.com/train_tier_1/ptn/f49f31/f49f31.tif",
+        "city": "ptn",
+        "tier": "1"
+    },
+    "4e7c7f": {
+        "scene_id": "4e7c7f",
+        "shape": [
+            40024,
+            39270
+        ],
+        "size": "1571742480",
+        "blocks": "1495",
+        "lnglat": "(32.6324144118354, 0.25567324532648283)",
+        "scene_url": "https://drivendata-competition-building-segmentation.s3-us-west-1.amazonaws.com/train_tier_1/kam/4e7c7f/4e7c7f.tif",
+        "city": "kam",
+        "tier": "1"
+    },
+    "a017f9": {
+        "scene_id": "a017f9",
+        "shape": [
+            54887,
+            50773
+        ],
+        "size": "2786777651",
+        "blocks": "2627",
+        "lnglat": "(39.26360059036853, -6.769447892034581)",
+        "scene_url": "https://drivendata-competition-building-segmentation.s3-us-west-1.amazonaws.com/train_tier_1/dar/a017f9/a017f9.tif",
+        "city": "dar",
+        "tier": "1"
+    },
+    "b15fce": {
+        "scene_id": "b15fce",
+        "shape": [
+            42558,
+            44870
+        ],
+        "size": "1909577460",
+        "blocks": "1796",
+        "lnglat": "(39.24188949399291, -6.796398497056731)",
+        "scene_url": "https://drivendata-competition-building-segmentation.s3-us-west-1.amazonaws.com/train_tier_1/dar/b15fce/b15fce.tif",
+        "city": "dar",
+        "tier": "1"
+    },
+    "353093": {
+        "scene_id": "353093",
+        "shape": [
+            59329,
+            52969
+        ],
+        "size": "3142597801",
+        "blocks": "2948",
+        "lnglat": "(39.21550637774174, -6.796662513762777)",
+        "scene_url": "https://drivendata-competition-building-segmentation.s3-us-west-1.amazonaws.com/train_tier_1/dar/353093/353093.tif",
+        "city": "dar",
+        "tier": "1"
+    },
+    "f883a0": {
+        "scene_id": "f883a0",
+        "shape": [
+            65495,
+            68001
+        ],
+        "size": "4453725495",
+        "blocks": "4183",
+        "lnglat": "(39.26540022851971, -6.789139689057225)",
+        "scene_url": "https://drivendata-competition-building-segmentation.s3-us-west-1.amazonaws.com/train_tier_1/dar/f883a0/f883a0.tif",
+        "city": "dar",
+        "tier": "1"
+    },
+    "42f235": {
+        "scene_id": "42f235",
+        "shape": [
+            47750,
+            51203
+        ],
+        "size": "2444943250",
+        "blocks": "2300",
+        "lnglat": "(39.26529344401253, -6.816468886192559)",
+        "scene_url": "https://drivendata-competition-building-segmentation.s3-us-west-1.amazonaws.com/train_tier_1/dar/42f235/42f235.tif",
+        "city": "dar",
+        "tier": "1"
+    },
+    "0a4c40": {
+        "scene_id": "0a4c40",
+        "shape": [
+            47177,
+            43393
+        ],
+        "size": "2047151561",
+        "blocks": "1949",
+        "lnglat": "(39.29026921252007, -6.816549899798913)",
+        "scene_url": "https://drivendata-competition-building-segmentation.s3-us-west-1.amazonaws.com/train_tier_1/dar/0a4c40/0a4c40.tif",
+        "city": "dar",
+        "tier": "1"
+    },
+    "33cae6": {
+        "scene_id": "33cae6",
+        "shape": [
+            34306,
+            37113
+        ],
+        "size": "1273198578",
+        "blocks": "1196",
+        "lnglat": "(39.300612949962435, -5.731031019254335)",
+        "scene_url": "https://drivendata-competition-building-segmentation.s3-us-west-1.amazonaws.com/train_tier_1/znz/33cae6/33cae6.tif",
+        "city": "znz",
+        "tier": "1"
+    },
+    "3b20d4": {
+        "scene_id": "3b20d4",
+        "shape": [
+            44134,
+            44162
+        ],
+        "size": "1949045708",
+        "blocks": "1854",
+        "lnglat": "(39.32720618078578, -5.838015406690501)",
+        "scene_url": "https://drivendata-competition-building-segmentation.s3-us-west-1.amazonaws.com/train_tier_1/znz/3b20d4/3b20d4.tif",
+        "city": "znz",
+        "tier": "1"
+    },
+    "076995": {
+        "scene_id": "076995",
+        "shape": [
+            46763,
+            39020
+        ],
+        "size": "1824692260",
+        "blocks": "1714",
+        "lnglat": "(39.35205416049279, -5.838000192901721)",
+        "scene_url": "https://drivendata-competition-building-segmentation.s3-us-west-1.amazonaws.com/train_tier_1/znz/076995/076995.tif",
+        "city": "znz",
+        "tier": "1"
+    },
+    "75cdfa": {
+        "scene_id": "75cdfa",
+        "shape": [
+            49743,
+            49709
+        ],
+        "size": "2472674787",
+        "blocks": "2330",
+        "lnglat": "(39.32722202124267, -5.865153922644845)",
+        "scene_url": "https://drivendata-competition-building-segmentation.s3-us-west-1.amazonaws.com/train_tier_1/znz/75cdfa/75cdfa.tif",
+        "city": "znz",
+        "tier": "1"
+    },
+    "9b8638": {
+        "scene_id": "9b8638",
+        "shape": [
+            45163,
+            36100
+        ],
+        "size": "1630384300",
+        "blocks": "1551",
+        "lnglat": "(39.35161040204289, -5.865139112894639)",
+        "scene_url": "https://drivendata-competition-building-segmentation.s3-us-west-1.amazonaws.com/train_tier_1/znz/9b8638/9b8638.tif",
+        "city": "znz",
+        "tier": "1"
+    },
+    "06f252": {
+        "scene_id": "06f252",
+        "shape": [
+            50642,
+            50692
+        ],
+        "size": "2567144264",
+        "blocks": "2425",
+        "lnglat": "(39.327237936742975, -5.892288051378683)",
+        "scene_url": "https://drivendata-competition-building-segmentation.s3-us-west-1.amazonaws.com/train_tier_1/znz/06f252/06f252.tif",
+        "city": "znz",
+        "tier": "1"
+    },
+    "c7415c": {
+        "scene_id": "c7415c",
+        "shape": [
+            46458,
+            33449
+        ],
+        "size": "1553973642",
+        "blocks": "1469",
+        "lnglat": "(39.35053535215495, -5.892273941269613)",
+        "scene_url": "https://drivendata-competition-building-segmentation.s3-us-west-1.amazonaws.com/train_tier_1/znz/c7415c/c7415c.tif",
+        "city": "znz",
+        "tier": "1"
+    },
+    "aee7fd": {
+        "scene_id": "aee7fd",
+        "shape": [
+            40592,
+            40551
+        ],
+        "size": "1646046192",
+        "blocks": "1544",
+        "lnglat": "(39.32725447732733, -5.919426673716014)",
+        "scene_url": "https://drivendata-competition-building-segmentation.s3-us-west-1.amazonaws.com/train_tier_1/znz/aee7fd/aee7fd.tif",
+        "city": "znz",
+        "tier": "1"
+    },
+    "3f8360": {
+        "scene_id": "3f8360",
+        "shape": [
+            38104,
+            33220
+        ],
+        "size": "1265814880",
+        "blocks": "1200",
+        "lnglat": "(39.35263156629705, -5.919411034633544)",
+        "scene_url": "https://drivendata-competition-building-segmentation.s3-us-west-1.amazonaws.com/train_tier_1/znz/3f8360/3f8360.tif",
+        "city": "znz",
+        "tier": "1"
+    },
+    "425403": {
+        "scene_id": "425403",
+        "shape": [
+            39878,
+            39850
+        ],
+        "size": "1589138300",
+        "blocks": "1478",
+        "lnglat": "(39.32726968009626, -5.946587962119703)",
+        "scene_url": "https://drivendata-competition-building-segmentation.s3-us-west-1.amazonaws.com/train_tier_1/znz/425403/425403.tif",
+        "city": "znz",
+        "tier": "1"
+    },
+    "bd5c14": {
+        "scene_id": "bd5c14",
+        "shape": [
+            38276,
+            38249
+        ],
+        "size": "1464018724",
+        "blocks": "1382",
+        "lnglat": "(39.35437301957759, -5.946571105142738)",
+        "scene_url": "https://drivendata-competition-building-segmentation.s3-us-west-1.amazonaws.com/train_tier_1/znz/bd5c14/bd5c14.tif",
+        "city": "znz",
+        "tier": "1"
+    },
+    "e52478": {
+        "scene_id": "e52478",
+        "shape": [
+            41637,
+            16856
+        ],
+        "size": "701833272",
+        "blocks": "658",
+        "lnglat": "(39.3734148828241, -5.946558745849)",
+        "scene_url": "https://drivendata-competition-building-segmentation.s3-us-west-1.amazonaws.com/train_tier_1/znz/e52478/e52478.tif",
+        "city": "znz",
+        "tier": "1"
+    },
+    "bc32f1": {
+        "scene_id": "bc32f1",
+        "shape": [
+            40155,
+            40180
+        ],
+        "size": "1613427900",
+        "blocks": "1530",
+        "lnglat": "(39.35439085697889, -5.97370952091161)",
+        "scene_url": "https://drivendata-competition-building-segmentation.s3-us-west-1.amazonaws.com/train_tier_1/znz/bc32f1/bc32f1.tif",
+        "city": "znz",
+        "tier": "1"
+    },
+    "825a50": {
+        "scene_id": "825a50",
+        "shape": [
+            14848,
+            8927
+        ],
+        "size": "132548096",
+        "blocks": "122",
+        "lnglat": "(2.0047657232522442, 13.577208731834256)",
+        "scene_url": "https://drivendata-competition-building-segmentation.s3-us-west-1.amazonaws.com/train_tier_1/nia/825a50/825a50.tif",
+        "city": "nia",
+        "tier": "1"
+    },
+    "8737a8": {
+        "scene_id": "8737a8",
+        "shape": [
+            50670,
+            47510
+        ],
+        "size": "2407331700",
+        "blocks": "2273",
+        "lnglat": "(39.22512712727064, -6.78351974036173)",
+        "scene_url": "https://drivendata-competition-building-segmentation.s3-us-west-1.amazonaws.com/train_tier_2/dar/8737a8/8737a8.tif",
+        "city": "dar",
+        "tier": "2"
+    },
+    "e14d1d": {
+        "scene_id": "e14d1d",
+        "shape": [
+            42598,
+            29144
+        ],
+        "size": "1241476112",
+        "blocks": "1166",
+        "lnglat": "(39.244865660753796, -6.782186941255804)",
+        "scene_url": "https://drivendata-competition-building-segmentation.s3-us-west-1.amazonaws.com/train_tier_2/dar/e14d1d/e14d1d.tif",
+        "city": "dar",
+        "tier": "2"
+    },
+    "8d7dd4": {
+        "scene_id": "8d7dd4",
+        "shape": [
+            34434,
+            38846
+        ],
+        "size": "1337623164",
+        "blocks": "1251",
+        "lnglat": "(39.255781147947005, -6.802540292725157)",
+        "scene_url": "https://drivendata-competition-building-segmentation.s3-us-west-1.amazonaws.com/train_tier_2/dar/8d7dd4/8d7dd4.tif",
+        "city": "dar",
+        "tier": "2"
+    },
+    "9870ba": {
+        "scene_id": "9870ba",
+        "shape": [
+            45033,
+            37649
+        ],
+        "size": "1695447417",
+        "blocks": "1580",
+        "lnglat": "(39.26465514756616, -6.80641642416407)",
+        "scene_url": "https://drivendata-competition-building-segmentation.s3-us-west-1.amazonaws.com/train_tier_2/dar/9870ba/9870ba.tif",
+        "city": "dar",
+        "tier": "2"
+    },
+    "3b3e53": {
+        "scene_id": "3b3e53",
+        "shape": [
+            57182,
+            57131
+        ],
+        "size": "3266864842",
+        "blocks": "3068",
+        "lnglat": "(39.250658053489936, -6.766150786567484)",
+        "scene_url": "https://drivendata-competition-building-segmentation.s3-us-west-1.amazonaws.com/train_tier_2/dar/3b3e53/3b3e53.tif",
+        "city": "dar",
+        "tier": "2"
+    },
+    "0ccd08": {
+        "scene_id": "0ccd08",
+        "shape": [
+            52556,
+            50430
+        ],
+        "size": "2650399080",
+        "blocks": "2511",
+        "lnglat": "(39.227392589717184, -6.809268333681018)",
+        "scene_url": "https://drivendata-competition-building-segmentation.s3-us-west-1.amazonaws.com/train_tier_2/dar/0ccd08/0ccd08.tif",
+        "city": "dar",
+        "tier": "2"
+    },
+    "ab32c9": {
+        "scene_id": "ab32c9",
+        "shape": [
+            48475,
+            69178
+        ],
+        "size": "3353403550",
+        "blocks": "3175",
+        "lnglat": "(39.24745902576787, -6.830572137799424)",
+        "scene_url": "https://drivendata-competition-building-segmentation.s3-us-west-1.amazonaws.com/train_tier_2/dar/ab32c9/ab32c9.tif",
+        "city": "dar",
+        "tier": "2"
+    },
+    "94a004": {
+        "scene_id": "94a004",
+        "shape": [
+            28207,
+            149097
+        ],
+        "size": "4205579079",
+        "blocks": "3931",
+        "lnglat": "(39.194871957159, -6.791930333115575)",
+        "scene_url": "https://drivendata-competition-building-segmentation.s3-us-west-1.amazonaws.com/train_tier_2/dar/94a004/94a004.tif",
+        "city": "dar",
+        "tier": "2"
+    },
+    "fb4c1a": {
+        "scene_id": "fb4c1a",
+        "shape": [
+            73454,
+            74548
+        ],
+        "size": "5475848792",
+        "blocks": "5168",
+        "lnglat": "(39.2491714790073, -6.793749705694996)",
+        "scene_url": "https://drivendata-competition-building-segmentation.s3-us-west-1.amazonaws.com/train_tier_2/dar/fb4c1a/fb4c1a.tif",
+        "city": "dar",
+        "tier": "2"
+    },
+    "ca3445": {
+        "scene_id": "ca3445",
+        "shape": [
+            39048,
+            48188
+        ],
+        "size": "1881645024",
+        "blocks": "1788",
+        "lnglat": "(39.26101957085713, -6.822255855401258)",
+        "scene_url": "https://drivendata-competition-building-segmentation.s3-us-west-1.amazonaws.com/train_tier_2/dar/ca3445/ca3445.tif",
+        "city": "dar",
+        "tier": "2"
+    },
+    "82a1f3": {
+        "scene_id": "82a1f3",
+        "shape": [
+            28182,
+            49331
+        ],
+        "size": "1390246242",
+        "blocks": "1300",
+        "lnglat": "(39.26122558457094, -6.809745175414554)",
+        "scene_url": "https://drivendata-competition-building-segmentation.s3-us-west-1.amazonaws.com/train_tier_2/dar/82a1f3/82a1f3.tif",
+        "city": "dar",
+        "tier": "2"
+    },
+    "cf83de": {
+        "scene_id": "cf83de",
+        "shape": [
+            38108,
+            47909
+        ],
+        "size": "1825716172",
+        "blocks": "1731",
+        "lnglat": "(39.2431220659347, -6.807908007210717)",
+        "scene_url": "https://drivendata-competition-building-segmentation.s3-us-west-1.amazonaws.com/train_tier_2/dar/cf83de/cf83de.tif",
+        "city": "dar",
+        "tier": "2"
+    },
+    "97ce35": {
+        "scene_id": "97ce35",
+        "shape": [
+            37580,
+            35065
+        ],
+        "size": "1317742700",
+        "blocks": "1232",
+        "lnglat": "(39.21570025026928, -6.738052366584108)",
+        "scene_url": "https://drivendata-competition-building-segmentation.s3-us-west-1.amazonaws.com/train_tier_2/dar/97ce35/97ce35.tif",
+        "city": "dar",
+        "tier": "2"
+    },
+    "24a7d8": {
+        "scene_id": "24a7d8",
+        "shape": [
+            39468,
+            35281
+        ],
+        "size": "1392470508",
+        "blocks": "1309",
+        "lnglat": "(39.2336128664397, -6.738034022973589)",
+        "scene_url": "https://drivendata-competition-building-segmentation.s3-us-west-1.amazonaws.com/train_tier_2/dar/24a7d8/24a7d8.tif",
+        "city": "dar",
+        "tier": "2"
+    },
+    "b8faa3": {
+        "scene_id": "b8faa3",
+        "shape": [
+            46813,
+            31394
+        ],
+        "size": "1469647322",
+        "blocks": "1379",
+        "lnglat": "(39.217272079610424, -6.76230063320355)",
+        "scene_url": "https://drivendata-competition-building-segmentation.s3-us-west-1.amazonaws.com/train_tier_2/dar/b8faa3/b8faa3.tif",
+        "city": "dar",
+        "tier": "2"
+    },
+    "63c3f9": {
+        "scene_id": "63c3f9",
+        "shape": [
+            47239,
+            49766
+        ],
+        "size": "2350896074",
+        "blocks": "2235",
+        "lnglat": "(39.23845054691127, -6.761943916381007)",
+        "scene_url": "https://drivendata-competition-building-segmentation.s3-us-west-1.amazonaws.com/train_tier_2/dar/63c3f9/63c3f9.tif",
+        "city": "dar",
+        "tier": "2"
+    },
+    "c533fa": {
+        "scene_id": "c533fa",
+        "shape": [
+            35216,
+            51644
+        ],
+        "size": "1818695104",
+        "blocks": "1714",
+        "lnglat": "(39.265503135307284, -6.766242004820011)",
+        "scene_url": "https://drivendata-competition-building-segmentation.s3-us-west-1.amazonaws.com/train_tier_2/dar/c533fa/c533fa.tif",
+        "city": "dar",
+        "tier": "2"
+    },
+    "5fe6fb": {
+        "scene_id": "5fe6fb",
+        "shape": [
+            46756,
+            48776
+        ],
+        "size": "2280570656",
+        "blocks": "2143",
+        "lnglat": "(39.21155202824212, -6.789451536812495)",
+        "scene_url": "https://drivendata-competition-building-segmentation.s3-us-west-1.amazonaws.com/train_tier_2/dar/5fe6fb/5fe6fb.tif",
+        "city": "dar",
+        "tier": "2"
+    },
+    "385a0e": {
+        "scene_id": "385a0e",
+        "shape": [
+            49240,
+            50881
+        ],
+        "size": "2505380440",
+        "blocks": "2385",
+        "lnglat": "(39.23857682069573, -6.78934606866768)",
+        "scene_url": "https://drivendata-competition-building-segmentation.s3-us-west-1.amazonaws.com/train_tier_2/dar/385a0e/385a0e.tif",
+        "city": "dar",
+        "tier": "2"
+    },
+    "759e34": {
+        "scene_id": "759e34",
+        "shape": [
+            49277,
+            20553
+        ],
+        "size": "1012790181",
+        "blocks": "963",
+        "lnglat": "(39.28284734550224, -6.788743611168467)",
+        "scene_url": "https://drivendata-competition-building-segmentation.s3-us-west-1.amazonaws.com/train_tier_2/dar/759e34/759e34.tif",
+        "city": "dar",
+        "tier": "2"
+    },
+    "ef8f27": {
+        "scene_id": "ef8f27",
+        "shape": [
+            48185,
+            50259
+        ],
+        "size": "2421729915",
+        "blocks": "2306",
+        "lnglat": "(39.211233198923075, -6.816158673829341)",
+        "scene_url": "https://drivendata-competition-building-segmentation.s3-us-west-1.amazonaws.com/train_tier_2/dar/ef8f27/ef8f27.tif",
+        "city": "dar",
+        "tier": "2"
+    },
+    "1d8af6": {
+        "scene_id": "1d8af6",
+        "shape": [
+            46518,
+            49159
+        ],
+        "size": "2286778362",
+        "blocks": "2160",
+        "lnglat": "(39.23820487725842, -6.816434498116066)",
+        "scene_url": "https://drivendata-competition-building-segmentation.s3-us-west-1.amazonaws.com/train_tier_2/dar/1d8af6/1d8af6.tif",
+        "city": "dar",
+        "tier": "2"
+    },
+    "d2f2f4": {
+        "scene_id": "d2f2f4",
+        "shape": [
+            48567,
+            57908
+        ],
+        "size": "2812417836",
+        "blocks": "2657",
+        "lnglat": "(39.23671265541112, -6.8433964183535485)",
+        "scene_url": "https://drivendata-competition-building-segmentation.s3-us-west-1.amazonaws.com/train_tier_2/dar/d2f2f4/d2f2f4.tif",
+        "city": "dar",
+        "tier": "2"
+    },
+    "eadfa3": {
+        "scene_id": "eadfa3",
+        "shape": [
+            48289,
+            51566
+        ],
+        "size": "2490070574",
+        "blocks": "2366",
+        "lnglat": "(39.26581485788931, -6.843413664726907)",
+        "scene_url": "https://drivendata-competition-building-segmentation.s3-us-west-1.amazonaws.com/train_tier_2/dar/eadfa3/eadfa3.tif",
+        "city": "dar",
+        "tier": "2"
+    },
+    "cbf72d": {
+        "scene_id": "cbf72d",
+        "shape": [
+            48650,
+            39625
+        ],
+        "size": "1927756250",
+        "blocks": "1818",
+        "lnglat": "(39.28962189276701, -6.843700535498471)",
+        "scene_url": "https://drivendata-competition-building-segmentation.s3-us-west-1.amazonaws.com/train_tier_2/dar/cbf72d/cbf72d.tif",
+        "city": "dar",
+        "tier": "2"
+    },
+    "5fadcd": {
+        "scene_id": "5fadcd",
+        "shape": [
+            43339,
+            78103
+        ],
+        "size": "3384905917",
+        "blocks": "3203",
+        "lnglat": "(39.267117106257906, -6.869015230654086)",
+        "scene_url": "https://drivendata-competition-building-segmentation.s3-us-west-1.amazonaws.com/train_tier_2/dar/5fadcd/5fadcd.tif",
+        "city": "dar",
+        "tier": "2"
+    },
+    "56e713": {
+        "scene_id": "56e713",
+        "shape": [
+            74840,
+            31511
+        ],
+        "size": "2358283240",
+        "blocks": "2246",
+        "lnglat": "(39.269588739407176, -6.900838035708066)",
+        "scene_url": "https://drivendata-competition-building-segmentation.s3-us-west-1.amazonaws.com/train_tier_2/dar/56e713/56e713.tif",
+        "city": "dar",
+        "tier": "2"
+    },
+    "219237": {
+        "scene_id": "219237",
+        "shape": [
+            48119,
+            86638
+        ],
+        "size": "4168933922",
+        "blocks": "3891",
+        "lnglat": "(39.16252481370719, -6.881065874720147)",
+        "scene_url": "https://drivendata-competition-building-segmentation.s3-us-west-1.amazonaws.com/train_tier_2/dar/219237/219237.tif",
+        "city": "dar",
+        "tier": "2"
+    },
+    "109874": {
+        "scene_id": "109874",
+        "shape": [
+            63666,
+            84738
+        ],
+        "size": "5394929508",
+        "blocks": "5130",
+        "lnglat": "(39.20931003813529, -6.8608302749794765)",
+        "scene_url": "https://drivendata-competition-building-segmentation.s3-us-west-1.amazonaws.com/train_tier_2/dar/109874/109874.tif",
+        "city": "dar",
+        "tier": "2"
+    },
+    "f9d120": {
+        "scene_id": "f9d120",
+        "shape": [
+            31840,
+            80261
+        ],
+        "size": "2555510240",
+        "blocks": "2429",
+        "lnglat": "(39.17909993063278, -6.7888554663580285)",
+        "scene_url": "https://drivendata-competition-building-segmentation.s3-us-west-1.amazonaws.com/train_tier_2/dar/f9d120/f9d120.tif",
+        "city": "dar",
+        "tier": "2"
+    },
+    "541eff": {
+        "scene_id": "541eff",
+        "shape": [
+            28334,
+            25885
+        ],
+        "size": "733425590",
+        "blocks": "682",
+        "lnglat": "(39.27150869027245, -6.931422127476599)",
+        "scene_url": "https://drivendata-competition-building-segmentation.s3-us-west-1.amazonaws.com/train_tier_2/dar/541eff/541eff.tif",
+        "city": "dar",
+        "tier": "2"
+    },
+    "4f38e1": {
+        "scene_id": "4f38e1",
+        "shape": [
+            59802,
+            56883
+        ],
+        "size": "3401717166",
+        "blocks": "3221",
+        "lnglat": "(13.594722537041129, 7.334282323717521)",
+        "scene_url": "https://drivendata-competition-building-segmentation.s3-us-west-1.amazonaws.com/train_tier_2/gao/4f38e1/4f38e1.tif",
+        "city": "gao",
+        "tier": "2"
+    },
+    "048ffb": {
+        "scene_id": "048ffb",
+        "shape": [
+            53447,
+            62329
+        ],
+        "size": "3331298063",
+        "blocks": "3165",
+        "lnglat": "(13.562391956341967, 7.311625533712931)",
+        "scene_url": "https://drivendata-competition-building-segmentation.s3-us-west-1.amazonaws.com/train_tier_2/gao/048ffb/048ffb.tif",
+        "city": "gao",
+        "tier": "2"
+    },
+    "71e6c2": {
+        "scene_id": "71e6c2",
+        "shape": [
+            91616,
+            52517
+        ],
+        "size": "4811397472",
+        "blocks": "4564",
+        "lnglat": "(55.45986601643745, -4.621536875590944)",
+        "scene_url": "https://drivendata-competition-building-segmentation.s3-us-west-1.amazonaws.com/train_tier_2/mah/71e6c2/71e6c2.tif",
+        "city": "mah",
+        "tier": "2"
+    },
+    "bd129c": {
+        "scene_id": "bd129c",
+        "shape": [
+            30556,
+            38044
+        ],
+        "size": "1162472464",
+        "blocks": "1077",
+        "lnglat": "(55.480798963360456, -4.7591203857366)",
+        "scene_url": "https://drivendata-competition-building-segmentation.s3-us-west-1.amazonaws.com/train_tier_2/mah/bd129c/bd129c.tif",
+        "city": "mah",
+        "tier": "2"
+    },
+    "240168": {
+        "scene_id": "240168",
+        "shape": [
+            48807,
+            33794
+        ],
+        "size": "1649383758",
+        "blocks": "1551",
+        "lnglat": "(55.52244480021075, -4.700789389706593)",
+        "scene_url": "https://drivendata-competition-building-segmentation.s3-us-west-1.amazonaws.com/train_tier_2/mah/240168/240168.tif",
+        "city": "mah",
+        "tier": "2"
+    },
+    "5fe2d3": {
+        "scene_id": "5fe2d3",
+        "shape": [
+            36582,
+            30428
+        ],
+        "size": "1113117096",
+        "blocks": "1040",
+        "lnglat": "(55.51471637326165, -4.744313224748016)",
+        "scene_url": "https://drivendata-competition-building-segmentation.s3-us-west-1.amazonaws.com/train_tier_2/mah/5fe2d3/5fe2d3.tif",
+        "city": "mah",
+        "tier": "2"
+    },
+    "10d200": {
+        "scene_id": "10d200",
+        "shape": [
+            4637,
+            7192
+        ],
+        "size": "33349304",
+        "blocks": "28",
+        "lnglat": "(15.336628395901105, -4.412474716894297)",
+        "scene_url": "https://drivendata-competition-building-segmentation.s3-us-west-1.amazonaws.com/train_tier_2/kin/10d200/10d200.tif",
+        "city": "kin",
+        "tier": "2"
+    },
+    "255028": {
+        "scene_id": "255028",
+        "shape": [
+            6387,
+            3207
+        ],
+        "size": "20483109",
+        "blocks": "18",
+        "lnglat": "(15.362613770386796, -4.3911722710625805)",
+        "scene_url": "https://drivendata-competition-building-segmentation.s3-us-west-1.amazonaws.com/train_tier_2/kin/255028/255028.tif",
+        "city": "kin",
+        "tier": "2"
+    },
+    "982a1f": {
+        "scene_id": "982a1f",
+        "shape": [
+            27395,
+            20397
+        ],
+        "size": "558775815",
+        "blocks": "517",
+        "lnglat": "(2.1426171105023064, 13.470467637221411)",
+        "scene_url": "https://drivendata-competition-building-segmentation.s3-us-west-1.amazonaws.com/train_tier_2/nia/982a1f/982a1f.tif",
+        "city": "nia",
+        "tier": "2"
+    },
+    "b80615": {
+        "scene_id": "b80615",
+        "shape": [
+            18721,
+            18331
+        ],
+        "size": "343174651",
+        "blocks": "322",
+        "lnglat": "(2.1418785169221066, 13.470132873613347)",
+        "scene_url": "https://drivendata-competition-building-segmentation.s3-us-west-1.amazonaws.com/train_tier_2/nia/b80615/b80615.tif",
+        "city": "nia",
+        "tier": "2"
+    }
+}
