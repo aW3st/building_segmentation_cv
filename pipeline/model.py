@@ -2,6 +2,9 @@
 # Tensorflow image segmentation #
 # ----------------------------- #
 
+from __future__ import absolute_import, division, print_function, unicode_literals
+
+
 import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
@@ -12,41 +15,76 @@ import pdb
 import tensorflow as tf
 from tqdm import tqdm
 
+import sys, os
+
+
+# !pip install -q git+https://github.com/tensorflow/examples.git
 from tensorflow_examples.models.pix2pix import pix2pix
-import tensorflow_datasets as tfds
-tfds.disable_progress_bar()
+
+# import tensorflow_datasets as tfds
+# tfds.disable_progress_bar()
+
 
 assert tf.version.VERSION[0] == '2', "Must use TF Version 2.x"
 
 
 def normalize(input_image, input_mask):
-  input_image = tf.cast(input_image, tf.float32) / 255.0
-  input_mask -= 1
-  return input_image, input_mask
+    input_image = tf.cast(input_image, tf.float32) / 255.0
+    input_mask -= 1
+    return input_image, input_mask
+
+def process_path(image_path):
+    # trim 'i.jpg' from path and replace with 'mask.jpg'
+    mask_path = tf.strings.regex_replace(image_path, '\1_(i).jpg', 'mask')
+    
+    # This will return a tuple of input & mask as the dataset format requires
+    return tf.io.read_file(image_path), tf.io.read_file(mask_path)
+
+def generate_dataset_from_local(data_dir='./data'):
+    
+    print(os.getcwd())
+    # Create tensorflow dataset generator from directory of training examples:
+    train_ds = tf.data.Dataset.list_files('data/train/*[i]*')
+
+    # Test generator:
+    for f in train_ds.take(5):
+        print(f.numpy())
+
+
+
+    train_ds = train_ds.map(process_path, )
+
+    for image_raw, label_raw in dataset.take(1):
+        print(repr(image_raw.numpy()[:100]))
+        print()
+        print(repr(label_raw.numpy()[:100]))
+
+    return dataset
+
 
 
 @tf.function
 def load_image_train(datapoint):
-  input_image = tf.image.resize(datapoint['image'], (512, 512))
-  input_mask = tf.image.resize(datapoint['mask'], (512, 512))
+    input_image = tf.image.resize(datapoint['image'], (512, 512))
+    input_mask = tf.image.resize(datapoint['mask'], (512, 512))
 
-  # Randomly flip the mask / image left-right. Why?
-  if tf.random.uniform(()) > 0.5:
-    input_image = tf.image.flip_left_right(input_image)
+    # Randomly flip the mask / image left-right.
+    if tf.random.uniform(()) > 0.5:
+        input_image = tf.image.flip_left_right(input_image)
     input_mask = tf.image.flip_left_right(input_mask)
 
-  input_image, input_mask = normalize(input_image, input_mask)
+    input_image, input_mask = normalize(input_image, input_mask)
 
-  return input_image, input_mask
+    return input_image, input_mask
 
 
 def load_image_test(datapoint):
-  input_image = tf.image.resize(datapoint['image'], (128, 128))
-  input_mask = tf.image.resize(datapoint['mask'], (128, 128))
+    input_image = tf.image.resize(datapoint['image'], (128, 128))
+    input_mask = tf.image.resize(datapoint['mask'], (128, 128))
 
-  input_image, input_mask = normalize(input_image, input_mask)
+    input_image, input_mask = normalize(input_image, input_mask)
 
-  return input_image, input_mask
+    return input_image, input_mask
 
 
 
@@ -64,11 +102,18 @@ def partition_datasets(dataset, val_set=False):
     train = dataset['train'].map(load_image_train, num_parallel_calls=tf.data.experimental.AUTOTUNE)
     test = dataset['test'].map(load_image_test)
 
+    # Buffer and epoch sizes
+    TRAIN_LENGTH = len(list(dataset['train'].enumerate()))
+    BATCH_SIZE = 64
+    BUFFER_SIZE = 1000
+    STEPS_PER_EPOCH = TRAIN_LENGTH // BATCH_SIZE
+    OUTPUT_CHANNELS = 2
+
     train_dataset = train.cache().shuffle(BUFFER_SIZE).batch(BATCH_SIZE).repeat()
     train_dataset = train_dataset.prefetch(buffer_size=tf.data.experimental.AUTOTUNE)
     test_dataset = test.batch(BATCH_SIZE)
 
-    return 
+    pass
 
 
 def compile_model(dataset, architecture='unet', pretrained_encoder='mobilenetv2'):
@@ -100,13 +145,6 @@ def compile_model(dataset, architecture='unet', pretrained_encoder='mobilenetv2'
         x = last(x)
 
         return tf.keras.Model(inputs=inputs, outputs=x)
-
-    # Buffer and epoch sizes
-    TRAIN_LENGTH = len(list(dataset['train'].enumerate())
-    BATCH_SIZE = 64
-    BUFFER_SIZE = 1000
-    STEPS_PER_EPOCH = TRAIN_LENGTH // BATCH_SIZE
-    OUTPUT_CHANNELS = 2
 
     if pretrained_encoder == 'mobilenetv2':
         # Pretrained Encoder
@@ -151,18 +189,18 @@ def compile_model(dataset, architecture='unet', pretrained_encoder='mobilenetv2'
 
 # Evaluation utilities
 def create_mask(pred_mask):
-  pred_mask = tf.argmax(pred_mask, axis=-1)
-  pred_mask = pred_mask[..., tf.newaxis]
-  return pred_mask[0]
+    pred_mask = tf.argmax(pred_mask, axis=-1)
+    pred_mask = pred_mask[..., tf.newaxis]
+    return pred_mask[0]
 
 def show_predictions(dataset=None, num=1):
   if dataset:
     for image, mask in dataset.take(num):
-      pred_mask = model.predict(image)
-      display([image[0], mask[0], create_mask(pred_mask)])
+        pred_mask = model.predict(image)
+        display([image[0], mask[0], create_mask(pred_mask)])
   else:
     display([sample_image, sample_mask,
-             create_mask(model.predict(sample_image[tf.newaxis, ...]))])
+            create_mask(model.predict(sample_image[tf.newaxis, ...]))])
 
 # Callback function for training
 class DisplayCallback(tf.keras.callbacks.Callback):
@@ -178,8 +216,8 @@ def train(model):
 
     EPOCHS = 20
     VAL_SUBSPLITS = 5
-    VAL_LENGTH = len(list(dataset['train'].enumerate())
-    VALIDATION_STEPS = TEST_LENGTH//BATCH_SIZE//VAL_SUBSPLITS
+    VAL_LENGTH = len(list(dataset['train'].enumerate()))
+    VALIDATION_STEPS = (TEST_LENGTH //BATCH_SIZE )//VAL_SUBSPLITS
 
     model_history = model.fit(train_dataset, epochs=EPOCHS,
                             steps_per_epoch=STEPS_PER_EPOCH,
@@ -187,7 +225,8 @@ def train(model):
                             validation_data=train_dataset,
                             callbacks=[DisplayCallback()])
 
-    return model_history
+    # return model_history
+    return None
 
 
 def full_workflow():
