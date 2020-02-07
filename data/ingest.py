@@ -1,5 +1,5 @@
 # ----------------------------- #
-# Hosted dataset URLs + prefixes
+# STAC and Geospatial Ingest
 # ----------------------------- #
 
 import os
@@ -24,6 +24,10 @@ import matplotlib.pyplot as plt
 
 assert tf.version.VERSION[0] == '2', "Must use TF Version 2.x"
 
+# ----------------------------- #
+# Hosted dataset URLs + prefixes
+# ----------------------------- #
+
 
 metadata = pd.read_csv('https://s3.amazonaws.com/drivendata/data/60/public/train_metadata.csv')
 base_url = 'https://drivendata-competition-building-segmentation.s3-us-west-1.amazonaws.com/'
@@ -37,52 +41,52 @@ warnings.simplefilter(action='ignore', category=FutureWarning)
 
 
 def get_hosted_urls():
-  '''
-  Return metadata, base_url of hosted data.
-  '''
-  return metadata, base_url
+    '''
+    Return metadata, base_url of hosted data.
+    '''
+    return metadata, base_url
   
 
 def get_scene_and_labels(scene_id):
-  '''
-  Returns opened scene reader and labels
-  '''
-  # search for row
-  row = metadata[metadata['img_uri'].str.contains(scene_id)]
+    '''
+    Returns opened scene reader and labels
+    '''
+    # search for row
+    row = metadata[metadata['img_uri'].str.contains(scene_id)]
 
-  img_uri, label_uri = row['img_uri'].values[0], row['label_uri'].values[0]
-  base_url = 'https://drivendata-competition-building-segmentation.s3-us-west-1.amazonaws.com/'
-  scene_path = base_url+img_uri
-  scene = rasterio.open(scene_path)
+    img_uri, label_uri = row['img_uri'].values[0], row['label_uri'].values[0]
+    base_url = 'https://drivendata-competition-building-segmentation.s3-us-west-1.amazonaws.com/'
+    scene_path = base_url+img_uri
+    scene = rasterio.open(scene_path)
 
-  labels = gpd.read_file(base_url+label_uri)
-  #transform to same CRS as raster file
-  labels = labels.to_crs(scene.crs)
-  return scene, labels
+    labels = gpd.read_file(base_url+label_uri)
+    #transform to same CRS as raster file
+    labels = labels.to_crs(scene.crs)
+    return scene, labels
 
 
 def get_tile_at_idx(idx=10, x_pos=None, y_pos=None):
-  '''
-  Get a single tile from a scene at the specified index.
-  Defaults to the middle of the 1st scene unless specified.
-  '''
-  scene = rasterio.open(base_url+metadata['img_uri'].iloc[idx])
+    '''
+    Get a single tile from a scene at the specified index.
+    Defaults to the middle of the 1st scene unless specified.
+    '''
+    scene = rasterio.open(base_url+metadata['img_uri'].iloc[idx])
 
-  if x_pos is None:
-    x_pos = scene.height//2
+    if x_pos is None:
+       x_pos = scene.height//2
 
-  if y_pos is None:
-    y_pos = scene.width//2
+    if y_pos is None:
+        y_pos = scene.width//2
 
-  window = Window(x_pos, y_pos,1024,1024)
-  window_transform = rasterio.windows.transform(window, scene.transform)
-  tile = scene.read(window=window)
+    window = Window(x_pos, y_pos,1024,1024)
+    window_transform = rasterio.windows.transform(window, scene.transform)
+    tile = scene.read(window=window)
 
-  # Confirm there is actually data at this tile
-  assert tile.any(), "No data in at position in scene."
+    # Confirm there is actually data at this tile
+    assert tile.any(), "No data in at position in scene."
 
-  rasterio.plot.show(tile, transform=window_transform);
-  return tile
+    rasterio.plot.show(tile, transform=window_transform);
+    return tile
 
 
 def generate_tile_and_mask(scene, labels, x_pos, y_pos, plot=False):
@@ -95,7 +99,7 @@ def generate_tile_and_mask(scene, labels, x_pos, y_pos, plot=False):
     tile = scene.read(window=window)
 
     if plot:
-      rasterio.plot.show(tile, transform=window_transform)
+        rasterio.plot.show(tile, transform=window_transform)
     
     #get window coordinates to make bounding box
     minx,miny,maxx,maxy = bounds(window, scene.transform)
@@ -108,80 +112,80 @@ def generate_tile_and_mask(scene, labels, x_pos, y_pos, plot=False):
     
     # Return None, None if there are too many alpha tiles, 
     if np.count_nonzero(tile[0]) < tile[0].size/2:
-      # print('skipping tile')
-      return None, None
+        # print('skipping tile')
+        return None, None
     if label_intersection.empty:
-      print('no buildings!')
-      return tile, np.zeros((1024,1024))
+        print('no buildings!')
+        return tile, np.zeros((1024,1024))
     else:
-      mask = rasterio.mask.raster_geometry_mask(scene, label_intersection, invert=True)
-      # raster_geometry_mask returns an array of shape (img.height, img.width), need to slice the portion we want
-      mask = mask[0][window.row_off:window.row_off+1024, window.col_off:window.col_off+1024]
-      return tile, mask.astype(np.float32)
+        mask = rasterio.mask.raster_geometry_mask(scene, label_intersection, invert=True)
+        # raster_geometry_mask returns an array of shape (img.height, img.width), need to slice the portion we want
+        mask = mask[0][window.row_off:window.row_off+1024, window.col_off:window.col_off+1024]
+        return tile, mask.astype(np.float32)
 
 
 def generate_tf_tiles_from_scene(scene_id, metadata, limit=None, chunks=False, write_to=None):
-  '''
-  Iterate through a scene and generate a dataset of tile and label masks.
+    '''
+    Iterate through a scene and generate a dataset of tile and label masks.
 
-  Returns a tf.data.Dataset() class object contains data from a single scene.
-  '''
+    Returns a tf.data.Dataset() class object contains data from a single scene.
+    '''
 
-  if chunks:
-      raise NotImplementedError
+    if chunks:
+        raise NotImplementedError
+      
+    scene = get_scene(scene_id, metadata)
+
+    tiles = []
+    masks = []
+    x = []
+    y = []
+
+    num_data = 0
+    skip_count = 0
+
+    for x_pos in tqdm(range(0, scene.height, 1024), desc='x_pos' ,position=0):
+        print(num_data, 'tiles collected\n')
+        if num_data > limit:
+            break
+
+        for y_pos in range(0, scene.width, 1024):
+
+          num_data += 1
+          if num_data > limit:
+              break
+
+          # print(x_pos, y_pos)
+          tile = Tile(scene, label, xpos, ypos, scene_id)
+          if tile.tile is not None:
+            if tile.tile[0].shape != tile.mask.shape:
+              print(f'tile and shape mismatch at {(x_pos, y_pos)}: {tile[0].shape} != {mask.shape}')
+              continue
+
+          else:
+            skip_count += 1
+            continue
     
-  scene = get_scene(scene_id, metadata)
+    if write_to:
+        raise NotImplementedError
 
-  tiles = []
-  masks = []
-  x = []
-  y = []
+    data = ({
+        'scene_id': [scene_id]*len(x),
+        'x': x,
+        'y': y,
+        'tile': tiles,
+        'mask': masks
+    })
 
-  num_data = 0
-  skip_count = 0
+    # pdb.set_trace()
 
-  for x_pos in tqdm(range(0, scene.height, 1024), desc='x_pos' ,position=0):
-    print(num_data, 'tiles collected\n')
-    if num_data > limit:
-      break
+    print(f'{num_data} of {num_data + skip_count} possible tile candidates stored')
+    # print(len(x))
+    dataset = tf.data.Dataset.from_tensor_slices(data)
 
-    for y_pos in range(0, scene.width, 1024):
+    scene.close()
 
-      num_data += 1
-      if num_data > limit:
-        break
-
-      # print(x_pos, y_pos)
-      tile = Tile(scene, label, xpos, ypos, scene_id)
-      if tile.tile is not None:
-        if tile.tile[0].shape != tile.mask.shape:
-          print(f'tile and shape mismatch at {(x_pos, y_pos)}: {tile[0].shape} != {mask.shape}')
-          continue
-
-      else:
-        skip_count += 1
-        continue
-  
-  if write_to:
-      raise NotImplementedError
-
-  data = ({
-      'scene_id': [scene_id]*len(x),
-      'x': x,
-      'y': y,
-      'tile': tiles,
-      'mask': masks
-  })
-
-  # pdb.set_trace()
-
-  print(f'{num_data} of {num_data + skip_count} possible tile candidates stored')
-  # print(len(x))
-  dataset = tf.data.Dataset.from_tensor_slices(data)
-
-  scene.close()
-
-  return dataset
+    return dataset
 
 
 def ingest_scenes(scene_ids, path_out='/scenes'):
@@ -207,6 +211,7 @@ class Tile():
         self.scene_id = scene_id
         self.window = Window(xpos, ypos, 1024,1024)
         self.tile = self.scene.read(window=self.window)[:3]
+        self.alpha_pct = 1 - np.count_nonzero(self.tile[0]) / self.tile[0].size
         self.window_transform = rasterio.windows.transform(self.window, self.scene.transform)
 
     def get_mask(self):
@@ -214,14 +219,16 @@ class Tile():
         boundingbox = box(*window_coords)
         boolmask = self.labels.intersects(boundingbox)
         self.label_intersection = self.labels.intersection(boundingbox)[boolmask]
+
         #if there are no buildings in tile, mask should be all zeros
         if self.label_intersection.empty:
             self.mask = np.zeros((1, 1024, 1024))
             return self.mask
-        self.mask = rasterio.mask.raster_geometry_mask(self.scene, self.label_intersection, invert=True)
-        # raster_geometry_mask returns an array of shape (img.height, img.width), need to slice the portion we want
-        self.mask = np.expand_dims(self.mask[0][self.ypos:self.ypos + 1024, self.xpos:self.xpos + 1024].astype(np.float32), axis=0)
-        return self.mask
+        else:
+            self.mask = rasterio.mask.raster_geometry_mask(self.scene, self.label_intersection, invert=True)
+            # raster_geometry_mask returns an array of shape (img.height, img.width), need to slice the portion we want
+            self.mask = np.expand_dims(self.mask[0][self.ypos:self.ypos + 1024, self.xpos:self.xpos + 1024].astype(np.float32), axis=0)
+            return self.mask
 
     def plot(self, mask=False):
         fig, ax = plt.subplots(figsize=(15,15))

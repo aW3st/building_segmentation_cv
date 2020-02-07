@@ -11,16 +11,19 @@
 # To test basic functions, run pytest from command-line on this file.
 
 import pytest
-from data.ingest import get_scene_and_labels
 from tqdm import tqdm
-
-from pipeline.scan_scenes import update_scan_log, get_scene_ids
-
 import json
+
+from data.ingest import get_scene_and_labels
+from pipeline.scan_scenes import update_scan_log, get_scene_ids, save_scene_tiles
 
 # Getting rid of those damn CRS warnings.
 import warnings
 warnings.simplefilter(action='ignore', category=FutureWarning)
+
+import logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger()
 
 
 def collect_scene_information():
@@ -31,8 +34,9 @@ def collect_scene_information():
     scenes = {}
 
     for scene_id in scene_ids:
-        print('collecting info on scene',scene_id)
+        logger.info('Collecting info on scene',scene_id)
         scene, labels = get_scene_and_labels(scene_id)
+        
         scene_url = scene.name
         scene_info = {
             'scene_id':scene_id,
@@ -52,11 +56,11 @@ def collect_scene_information():
     return scenes
 
 
-def scan_scenes_to_local(limit=2):
+def scan_scenes_to_local(limit=10):
     '''
     Scan scenes, ignoring ones already scanned.
 
-    Only scan as many scenes as limit.
+    Only scan as many scenes as specified in limit arg.
     '''
 
     # Scenes scanned in this directory so far.
@@ -67,19 +71,20 @@ def scan_scenes_to_local(limit=2):
     scene_list = get_scene_ids()
 
     # A json with a few pieces of helpful information.
-    scene_info = json.load('data/scene_log.json')
+    with open('data/scene_log.json','r') as file:
+        scene_info = json.load(file)
 
     count = 0
     for scene_id in scene_list:
         if count > limit:
             break
-        print('scene id', scene_id)
+        logger.info('scene id', scene_id)
         s_info = scene_info[scene_id]
 
         blk_ct = s_info['blocks']
 
         print(f'{scene_id} has {blk_ct} blocks')
-        if s_info['blocks'] < 1000:
+        if int(s_info['blocks']) < 2000:
             if scene_id not in scanned_scenes:
                 save_scene_tiles(scene_id)
                 count += 1
@@ -108,6 +113,9 @@ def scratch():
 
 
 def test_tile_and_mask_write():
+    '''
+    Testing function for tile and mask writing.
+    '''
     metadata, base_url = get_hosted_urls()
 
     scene, labels = get_scene_and_labels(scene_id='d41d81')
@@ -116,3 +124,6 @@ def test_tile_and_mask_write():
     tile.get_mask()
     tile.plot(mask=True)
     tile.write_data('data/test')
+
+if __name__=='__main__':
+    scan_scenes_to_local(limit=2)

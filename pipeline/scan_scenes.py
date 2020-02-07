@@ -6,7 +6,8 @@ from os.path import isfile, join
 import pandas as pd
 
 import logging
-logging.basicConfig()
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger()
 
 import warnings
 warnings.simplefilter(action='ignore', category=FutureWarning)
@@ -22,16 +23,16 @@ def update_scan_log():
     Update the local log.
     '''
 
-    print('Updating local scan log.')
-    with open('./data/scan_log.txt') as file:
+    logger.info('Updating local scan log.')
+    with open('./data/local_scene_registry.txt') as file:
         scanned_scenes = file.read().splitlines()
 
     # loop through directory and find out which scenes have been scanned
     scanned_scenes = set(
         [f.split('_')[0] for f in listdir('data/train')
-         if isfile(join('data/train', f))]
-         )
-    print(scanned_scenes)
+        if isfile(join('data/train', f))]
+        )
+    print('Previously scanned scenes:\n',scanned_scenes)
 
     with open('./data/local_scene_registry.txt', 'w') as file:
         file.write(str(scanned_scenes))
@@ -60,9 +61,18 @@ def save_scene_tiles(scene_id, path='./data/train'):
             tile = Tile(scene, labels, x_pos, y_pos, scene_id)
             tile.get_mask()
             if (tile.tile is not None) and (tile.mask is not None):
-                if tile.tile[0].shape != tile.mask[0].shape:
-                    print(f'tile and shape mismatch at {(x_pos, y_pos)}: {tile.tile[0].shape} != {tile.mask[0].shape}')
+                if tile.tile[0].shape != (1024, 1024):
+                    print('Tile not correct dimensions.')
                     continue
+                elif tile.tile[0].shape != tile.mask[0].shape:
+                    logger.info(f'tile and shape mismatch at {(x_pos, y_pos)}: {tile.tile[0].shape} != {tile.mask[0].shape}')
+                    continue
+                elif tile.alpha_pct > 0.5:
+                    logger.info(f'Too many empty tiles at {x_pos}, {y_pos}.')
+                    continue
+                elif tile.label_intersection.empty:
+                    # No buildings... What to do?
+                    pass
                 tile.write_data('data/train/')
             else:
                 continue
