@@ -16,6 +16,7 @@ import json
 
 from data.ingest import get_scene_and_labels
 from pipeline.scan_scenes import update_scan_log, get_scene_ids, save_scene_tiles
+from pipeline.model import generate_dataset_from_local, run_model_workflow
 
 # Getting rid of those damn CRS warnings.
 import warnings
@@ -78,20 +79,19 @@ def scan_scenes_to_local(limit=10):
     for scene_id in scene_list:
         if count > limit:
             break
-        logger.info('scene id', scene_id)
-        s_info = scene_info[scene_id]
-
-        blk_ct = s_info['blocks']
-
-        print(f'{scene_id} has {blk_ct} blocks')
-        if int(s_info['blocks']) < 2000:
-            if scene_id not in scanned_scenes:
+        if scene_id not in scanned_scenes:
+            logger.info(f'{scene_id} already scanned')
+        else:
+            # Get basic scene info.
+            logger.info('Looking up scene id:', scene_id)
+            s_info = scene_info[scene_id]
+            blk_ct = s_info['blocks']
+            logger.info(f'{scene_id} has {blk_ct} blocks')
+            if int(s_info['blocks']) < 2000:
                 save_scene_tiles(scene_id)
                 count += 1
             else:
-                print('already scanned')
-        else:
-            continue
+                continue
 
     return True
 
@@ -125,5 +125,8 @@ def test_tile_and_mask_write():
     tile.plot(mask=True)
     tile.write_data('data/test')
 
+
+
 if __name__=='__main__':
-    scan_scenes_to_local(limit=2)
+    # generate_dataset_from_local()
+    model_history = run_model_workflow()

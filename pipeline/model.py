@@ -9,6 +9,8 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
 
+import pydot
+
 import pdb
 
 # Tensorflow stuff
@@ -29,40 +31,59 @@ assert tf.version.VERSION[0] == '2', "Must use TF Version 2.x"
 
 
 def normalize(input_image, input_mask):
+    input_image = tf.image.resize(input_image, (128, 128))
+    input_mask = tf.image.resize(input_mask, (128, 128))
     input_image = tf.cast(input_image, tf.float32) / 255.0
-    input_mask -= 1
+    input_mask = tf.cast(input_mask, tf.float32)
+    # input_mask -= 1
     return input_image, input_mask
+
 
 def process_path(image_path):
     # trim 'i.jpg' from path and replace with 'mask.jpg'
     mask_path = tf.strings.regex_replace(image_path, '\1_(i).jpg', 'mask')
     
     # This will return a tuple of input & mask as the dataset format requires
-    return tf.io.read_file(image_path), tf.io.read_file(mask_path)
+    image_string = tf.io.read_file(image_path)
+    mask_string = tf.io.read_file(mask_path)
 
-def generate_dataset_from_local(data_dir='./data'):
+    image_decoded = tf.image.decode_jpeg(image_string, channels=3)
+    mask_decoded = tf.image.decode_jpeg(mask_string, channels=1)
+    # print('image decoded type', type(image_decoded))
+
+
+    # input_image, input_mask = tf.image.decode_jpeg(, tf.image.decode_jpeg(
+
+    # image, mask = normalize(image_decoded, mask_decoded)
+
+    # print(image.shape, mask.shape)
+
+
+    return image_decoded, mask_decoded
+
+# def data_gen(X=None, y=None, batch_size=32, nb_epochs=1, sess=None):
+def generate_dataset_from_local(split='train'):
     
-    print(os.getcwd())
     # Create tensorflow dataset generator from directory of training examples:
-    train_ds = tf.data.Dataset.list_files('data/train/*[i]*')
+    filepaths_ds = tf.data.Dataset.list_files('data/'+split+'/*[i]*')
+    # print('sample file string tensor: ', next(iter(filepaths_ds)))
+    labeled_ds = filepaths_ds.map(process_path)
+    # print(type(labeled_ds))
 
-    # Test generator:
-    for f in train_ds.take(5):
-        print(f.numpy())
+    # # Test generator:
+    # for f in train_ds.take(5):
+    #     print(f.numpy())
+
+    # Test proper read of image binaries
+    # for image_raw, label_raw in dataset.take(1):
+    #     print(repr(image_raw.numpy()[:100]))
+    #     print()
+    #     print(repr(label_raw.numpy()[:100]))
+
+    return labeled_ds
 
 
-
-    train_ds = train_ds.map(process_path, )
-
-    for image_raw, label_raw in dataset.take(1):
-        print(repr(image_raw.numpy()[:100]))
-        print()
-        print(repr(label_raw.numpy()[:100]))
-
-    return dataset
-
-
-
+# -–––––– From original tutorial. May not be needed. ––––––––––––
 @tf.function
 def load_image_train(datapoint):
     input_image = tf.image.resize(datapoint['image'], (512, 512))
@@ -85,25 +106,29 @@ def load_image_test(datapoint):
     input_image, input_mask = normalize(input_image, input_mask)
 
     return input_image, input_mask
+# –––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––
 
 
-
-def partition_datasets(dataset, val_set=False):
+def partition_datasets(dataset=None, val_set=False):
     ''''
     Given dictionary of tf.data.datasets (keys are 'train', 'test'[, 'val']),
 
     return training, test, and optionally validation sets.
     '''
 
-    # need to implement a validation split
+    # need to implement a proper test/train/val split at some point
     if val_set:
         raise NotImplementedError
+    else:
+        train = generate_dataset_from_local('train')
+        test = generate_dataset_from_local('test')
 
-    train = dataset['train'].map(load_image_train, num_parallel_calls=tf.data.experimental.AUTOTUNE)
-    test = dataset['test'].map(load_image_test)
+        # From original tutorial:
+        # train = dataset['train'].map(load_image_train, num_parallel_calls=tf.data.experimental.AUTOTUNE)
+        # test = dataset['test'].map(load_image_test)
 
     # Buffer and epoch sizes
-    TRAIN_LENGTH = len(list(dataset['train'].enumerate()))
+    TRAIN_LENGTH = len(list(train.enumerate()))
     BATCH_SIZE = 64
     BUFFER_SIZE = 1000
     STEPS_PER_EPOCH = TRAIN_LENGTH // BATCH_SIZE
@@ -113,19 +138,19 @@ def partition_datasets(dataset, val_set=False):
     train_dataset = train_dataset.prefetch(buffer_size=tf.data.experimental.AUTOTUNE)
     test_dataset = test.batch(BATCH_SIZE)
 
-    pass
+    train, test, train_dataset, test_dataset
 
 
-def compile_model(dataset, architecture='unet', pretrained_encoder='mobilenetv2'):
+def compile_model(architecture='unet', pretrained_encoder='mobilenetv2'):
 
-    def build_unet(OUTPUT_CHANNELS):
+    def build_unet(OUTPUT_CHANNELS=2):
         '''
         Build UNet model.
         '''
 
         # This is the last layer of the model
         last = tf.keras.layers.Conv2DTranspose(
-            output_channels, 3, strides=2,
+            OUTPUT_CHANNELS, 3, strides=2,
             padding='same', activation='softmax')  #64x64 -> 128x128
 
         inputs = tf.keras.layers.Input(shape=[128, 128, 3])
@@ -176,11 +201,10 @@ def compile_model(dataset, architecture='unet', pretrained_encoder='mobilenetv2'
         ])
 
     if architecture=='unet':
-        model = unet_model(OUTPUT_CHANNELS=2)
+        model = build_unet(OUTPUT_CHANNELS=2)
     else:
         raise NotImplementedError
 
-    model = unet_model(OUTPUT_CHANNELS)
     model.compile(optimizer='adam', loss='sparse_categorical_crossentropy',
               metrics=['accuracy'])
 
@@ -209,36 +233,66 @@ class DisplayCallback(tf.keras.callbacks.Callback):
     show_predictions()
     print ('\nSample Prediction after epoch {}\n'.format(epoch+1))
 
-def train(model):
+def train(model, train_dataset, validation_dataset):
     '''
     Train model. Return history.
     '''
 
     EPOCHS = 20
     VAL_SUBSPLITS = 5
-    VAL_LENGTH = len(list(dataset['train'].enumerate()))
-    VALIDATION_STEPS = (TEST_LENGTH //BATCH_SIZE )//VAL_SUBSPLITS
+    VAL_LENGTH = 1414
+    VALIDATION_STEPS = (VAL_LENGTH // BATCH_SIZE )// VAL_SUBSPLITS
 
     model_history = model.fit(train_dataset, epochs=EPOCHS,
                             steps_per_epoch=STEPS_PER_EPOCH,
                             validation_steps=VALIDATION_STEPS,
-                            validation_data=train_dataset,
+                            validation_data=validation_dataset,
                             callbacks=[DisplayCallback()])
 
     # return model_history
-    return None
+    return model_history
 
 
-def full_workflow():
+def run_model_workflow():
 
-    # Get dataset
+    train = generate_dataset_from_local('train')
+    print(train)
+    train = train.map(normalize, num_parallel_calls=tf.data.experimental.AUTOTUNE)
+    print(train)
 
-    # Partition into train and test
+    test = generate_dataset_from_local('test')
+    test.map(normalize)
+
+    dataset = {'train': train, 'test': test}
+
+        # From original tutorial:
+        # train = dataset['train'].map(load_image_train, num_parallel_calls=tf.data.experimental.AUTOTUNE)
+        # test = dataset['test'].map(load_image_test)
+
+    # Buffer and epoch sizes
+    TRAIN_LENGTH = 1414
+    BATCH_SIZE = 64
+    BUFFER_SIZE = 300
+    STEPS_PER_EPOCH = TRAIN_LENGTH // BATCH_SIZE
+    OUTPUT_CHANNELS = 2
+
+    train_dataset = train.cache().shuffle(BUFFER_SIZE).batch(BATCH_SIZE).repeat()
+    train_dataset = train_dataset.prefetch(buffer_size=tf.data.experimental.AUTOTUNE)
+    print(train_dataset)
+    test_dataset = test.batch(BATCH_SIZE)
 
     # Compile model
 
+    model = compile_model()
     # Train
 
-    # Return model history and results.
+    # tf.keras.utils.plot_model(model, show_shapes=True)
 
+    # pdb.set_trace()
+
+    # model_history = model.fit(train_dataset, epochs=20, steps_per_epoch=STEPS_PER_EPOCH)
+
+    # Return model history and results.
+    pdb.set_trace()
+    train(model, train_dataset, test_dataset)
     pass
