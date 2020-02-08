@@ -1,4 +1,4 @@
-from data.ingest import Tile, generate_tile_and_mask, get_hosted_urls, get_scene_and_labels
+from pipeline.ingest import Tile, generate_tile_and_mask, get_hosted_urls, get_scene_and_labels
 from tqdm import tqdm
 from os import listdir
 from os.path import isfile, join

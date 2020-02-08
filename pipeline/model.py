@@ -308,28 +308,36 @@ def run_model2():
 
     print(os.listdir())
 
-    image_generator = image_datagen.flow_from_directory(directory='data/train_bk2/input', target_size=(1024, 1024),
+    image_generator = image_datagen.flow_from_directory(directory='data/train_bk2/images', target_size=(1024, 1024),
                                                             class_mode=None, seed=seed, batch_size=64)
 
     
 
-    mask_generator = mask_datagen.flow_from_directory('data/train_bk2/mask', target_size=(1024, 1024),
+    mask_generator = mask_datagen.flow_from_directory('data/train_bk2/masks', target_size=(1024, 1024),
                                                         class_mode=None, seed=seed, batch_size=64)
 
     train_generator = (pair for pair in zip(image_generator, mask_generator))
 
-    pdb.set_trace()
+    # pdb.set_trace()
+
     # tf.data.Dataset.
 
     def our_generator():
         for pair in zip(image_generator, mask_generator):
             yield pair[0], pair[1]
 
-    # train_generator = tf.data.Dataset.from_generator(image_generator.flow_from_directory, args=['data/train_bk2/input', (1024, 1024), None, 0, 64], (tf.float32, tf.float32))
+    train_ds = (tf.data.Dataset.from_generator(
+        image_datagen.flow_from_directory, args=['data/train_bk2/images', (1024, 1024)],
+        output_types=(tf.float32, tf.float32),
+        output_shapes=([707,1024,1024,3], [707,1024,1024,2])
+    ))
 
+    train_ds.map(normalize)
+    model = compile_model()
 
-    # model = compile_model()
-    # model.fit(train_generator, steps_per_epoch=707/64, epochs=20, verbose=1)
+    pdb.set_trace()
+
+    # model.fit(train_ds, steps_per_epoch=707/64, epochs=20, verbose=1)
     pass
 
 def run_model_3():
