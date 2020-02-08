@@ -36,6 +36,7 @@ def normalize(input_image, input_mask):
     input_mask = tf.image.resize(input_mask, (128, 128))
     input_image = tf.cast(input_image, tf.float32) / 255.0
     input_mask = tf.cast(input_mask, tf.float32)
+    print(input_image.shape, input_mask.shape)
     # input_mask -= 1
     return input_image, input_mask
 
@@ -308,13 +309,13 @@ def run_model2():
 
     print(os.listdir())
 
-    image_generator = image_datagen.flow_from_directory(directory='data/train_bk2/images', target_size=(1024, 1024),
-                                                            class_mode=None, seed=seed, batch_size=64)
+    # image_generator = image_datagen.flow_from_directory(directory='data/train/images', target_size=(1024, 1024),
+    #                                                         class_mode=None, seed=seed, batch_size=64)
 
     
 
-    mask_generator = mask_datagen.flow_from_directory('data/train_bk2/masks', target_size=(1024, 1024),
-                                                        class_mode=None, seed=seed, batch_size=64)
+    # mask_generator = mask_datagen.flow_from_directory('data/train/masks', target_size=(1024, 1024),
+    #                                                     class_mode=None, seed=seed, batch_size=64)
 
     train_generator = (pair for pair in zip(image_generator, mask_generator))
 
@@ -327,15 +328,15 @@ def run_model2():
             yield pair[0], pair[1]
 
     train_ds = (tf.data.Dataset.from_generator(
-        image_datagen.flow_from_directory, args=['data/train_bk2/images', (1024, 1024)],
-        output_types=(tf.float32, tf.float32),
-        output_shapes=([707,1024,1024,3], [707,1024,1024,2])
+        image_datagen.flow_from_directory, args=['data/train/images'],
+        output_types=(tf.float32)
+        # output_shapes=(707,1024,1024,3)
     ))
 
-    train_ds.map(normalize)
+    train_ds = train_ds.map(normalize)
     model = compile_model()
 
-    pdb.set_trace()
+    # pdb.set_trace()
 
     # model.fit(train_ds, steps_per_epoch=707/64, epochs=20, verbose=1)
     pass
@@ -345,9 +346,7 @@ def run_model_3():
     
 
     # we create two instances with the same arguments
-    data_gen_args = dict(featurewise_center=True,
-                        featurewise_std_normalization=True,
-                        rotation_range=90,
+    data_gen_args = dict(rotation_range=90,
                         width_shift_range=0.1,
                         height_shift_range=0.1,
                         zoom_range=0.2)
@@ -359,20 +358,22 @@ def run_model_3():
     # image_datagen.fit(images, augment=True, seed=seed)
     # mask_datagen.fit(masks, augment=True, seed=seed)
     image_generator = image_datagen.flow_from_directory(
-        'data/train_bk2/images',
+        'data/train/images', target_size=(128,128),
         class_mode=None,
         seed=seed)
     mask_generator = mask_datagen.flow_from_directory(
-        'data/train_bk2/masks',
+        'data/train/masks', target_size=(128,128),
         class_mode=None,
         seed=seed)
     # combine generators into one which yields image and masks
-    train_generator = tf.data.Dataset.zip((image_generator, mask_generator))
+    # train_generator = tf.data.Dataset.zip((image_generator, mask_generator))
 
-    tf.data.Dataset.from_generator( 
-        gen, 
-        (tf.int64, tf.int64), 
-        (tf.TensorShape([]), tf.TensorShape([None]))) 
+    train_generator = (pair for pair in zip(image_generator, mask_generator))
+
+    # tf.data.Dataset.from_generator( 
+    #     gen, 
+    #     (tf.int64, tf.int64), 
+    #     (tf.TensorShape([]), tf.TensorShape([None]))) 
 
     model = compile_model()
     model.fit(
@@ -380,7 +381,7 @@ def run_model_3():
         steps_per_epoch=2000,
         epochs=50)
 
-def train_generator(img_dir='data/train_bk2/images', label_dir='data/train_bk2/masks', batch_size=64, input_size=(1024,1024)):
+def train_generator(img_dir='data/train/images', label_dir='data/train/masks', batch_size=64, input_size=(1024,1024)):
         list_images = os.listdir(img_dir)
         shuffle(list_images) #Randomize the choice of batches
         ids_train_split = range(len(list_images))
@@ -409,3 +410,17 @@ def run_model_4():
         train_generator,
         steps_per_epoch=707/64,
         epochs=50)
+
+
+
+if __name__=='__main__':
+    image_datagen = tf.keras.preprocessing.image.ImageDataGenerator(**data_gen_args)
+    mask_datagen = tf.keras.preprocessing.image.ImageDataGenerator(**data_gen_args)
+    seed = 1
+
+    image_generator = image_datagen.flow_from_directory(directory='data/train/images', target_size=(1024, 1024),
+                                                            class_mode=None, seed=seed, batch_size=64)
+
+
+    mask_generator = mask_datagen.flow_from_directory('data/train/masks', target_size=(1024, 1024),
+                                                        class_mode=None, seed=seed, batch_size=64)

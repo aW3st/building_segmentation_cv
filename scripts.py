@@ -131,4 +131,18 @@ def test_tile_and_mask_write():
 if __name__=='__main__':
     # generate_dataset_from_local()
     # model_history = run_model_workflow()
-    run_model2()
+    run_model_3()
+
+    image_datagen = tf.keras.preprocessing.image.ImageDataGenerator(**data_gen_args)
+mask_datagen = tf.keras.preprocessing.image.ImageDataGenerator(**data_gen_args)
+seed = 1
+
+print(os.listdir())
+
+image_generator = image_datagen.flow_from_directory(directory='data/train/images', target_size=(1024, 1024),
+                                                        class_mode=None, seed=seed, batch_size=64)
+
+
+
+mask_generator = mask_datagen.flow_from_directory('data/train/masks', target_size=(1024, 1024),
+                                                    class_mode=None, seed=seed, batch_size=64)
