@@ -22,6 +22,7 @@ import sys, os
 
 # !pip install -q git+https://github.com/tensorflow/examples.git
 from tensorflow_examples.models.pix2pix import pix2pix
+from tensorflow.keras.preprocessing.image import ImageDataGenerator
 
 # import tensorflow_datasets as tfds
 # tfds.disable_progress_bar()
@@ -296,3 +297,107 @@ def run_model_workflow():
     pdb.set_trace()
     train(model, train_dataset, test_dataset)
     pass
+
+def run_model2():
+
+    data_gen_args = dict(width_shift_range=0.2, height_shift_range=0.2, data_format='channels_first')
+    # data_gen_args = {}
+    image_datagen = tf.keras.preprocessing.image.ImageDataGenerator(**data_gen_args)
+    mask_datagen = tf.keras.preprocessing.image.ImageDataGenerator(**data_gen_args)
+    seed = 1
+
+    print(os.listdir())
+
+    image_generator = image_datagen.flow_from_directory(directory='data/train_bk2/input', target_size=(1024, 1024),
+                                                            class_mode=None, seed=seed, batch_size=64)
+
+    
+
+    mask_generator = mask_datagen.flow_from_directory('data/train_bk2/mask', target_size=(1024, 1024),
+                                                        class_mode=None, seed=seed, batch_size=64)
+
+    train_generator = (pair for pair in zip(image_generator, mask_generator))
+
+    pdb.set_trace()
+    # tf.data.Dataset.
+
+    def our_generator():
+        for pair in zip(image_generator, mask_generator):
+            yield pair[0], pair[1]
+
+    # train_generator = tf.data.Dataset.from_generator(image_generator.flow_from_directory, args=['data/train_bk2/input', (1024, 1024), None, 0, 64], (tf.float32, tf.float32))
+
+
+    # model = compile_model()
+    # model.fit(train_generator, steps_per_epoch=707/64, epochs=20, verbose=1)
+    pass
+
+def run_model_3():
+
+    
+
+    # we create two instances with the same arguments
+    data_gen_args = dict(featurewise_center=True,
+                        featurewise_std_normalization=True,
+                        rotation_range=90,
+                        width_shift_range=0.1,
+                        height_shift_range=0.1,
+                        zoom_range=0.2)
+    image_datagen = ImageDataGenerator(**data_gen_args)
+    mask_datagen = ImageDataGenerator(**data_gen_args)
+
+    # Provide the same seed and keyword arguments to the fit and flow methods
+    seed = 1
+    # image_datagen.fit(images, augment=True, seed=seed)
+    # mask_datagen.fit(masks, augment=True, seed=seed)
+    image_generator = image_datagen.flow_from_directory(
+        'data/train_bk2/images',
+        class_mode=None,
+        seed=seed)
+    mask_generator = mask_datagen.flow_from_directory(
+        'data/train_bk2/masks',
+        class_mode=None,
+        seed=seed)
+    # combine generators into one which yields image and masks
+    train_generator = tf.data.Dataset.zip((image_generator, mask_generator))
+
+    tf.data.Dataset.from_generator( 
+        gen, 
+        (tf.int64, tf.int64), 
+        (tf.TensorShape([]), tf.TensorShape([None]))) 
+
+    model = compile_model()
+    model.fit(
+        train_generator,
+        steps_per_epoch=2000,
+        epochs=50)
+
+def train_generator(img_dir='data/train_bk2/images', label_dir='data/train_bk2/masks', batch_size=64, input_size=(1024,1024)):
+        list_images = os.listdir(img_dir)
+        shuffle(list_images) #Randomize the choice of batches
+        ids_train_split = range(len(list_images))
+        while True:
+            for start in range(0, len(ids_train_split), batch_size):
+                x_batch = []
+                y_batch = []
+                end = min(start + batch_size, len(ids_train_split))
+                ids_train_batch = ids_train_split[start:end]
+                for id in ids_train_batch:
+                    img = cv2.imread(os.path.join(img_dir, list_images[id]))
+                    img = cv2.resize(img, (input_size[0], input_size[1]))
+                    mask = cv2.imread(os.path.join(label_dir, list_images[id].replace('jpg', 'png')), 0)
+                    mask = cv2.resize(mask, (input_size[0], input_size[1]))
+                    mask = np.expand_dims(mask, axis=2)
+                    x_batch.append(img)
+                    y_batch.append(mask)
+                x_batch = np.array(x_batch, np.float32) / 255.
+                y_batch = np.array(y_batch, np.float32)
+                yield x_batch, y_batch
+                
+def run_model_4():
+
+    model = compile_model()
+    model.fit(
+        train_generator,
+        steps_per_epoch=707/64,
+        epochs=50)

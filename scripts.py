@@ -16,7 +16,7 @@ import json
 
 from data.ingest import get_scene_and_labels
 from pipeline.scan_scenes import update_scan_log, get_scene_ids, save_scene_tiles
-from pipeline.model import generate_dataset_from_local, run_model_workflow
+from pipeline.model import *
 
 # Getting rid of those damn CRS warnings.
 import warnings
@@ -127,6 +127,8 @@ def test_tile_and_mask_write():
 
 
 
+
 if __name__=='__main__':
     # generate_dataset_from_local()
-    model_history = run_model_workflow()
+    # model_history = run_model_workflow()
+    run_model_4()
