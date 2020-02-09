@@ -19,6 +19,7 @@ from tqdm import tqdm
 
 import sys, os
 
+tf.data.Dataset()
 
 # !pip install -q git+https://github.com/tensorflow/examples.git
 from tensorflow_examples.models.pix2pix import pix2pix

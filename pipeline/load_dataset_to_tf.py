@@ -1,3 +1,12 @@
+# Load dataset from directory.
+
+import os
+import sys
+
+import tensorflow as tf
+
+tf.data.Dataset()
+
 def normalize(input_image, input_mask):
     input_image = tf.image.resize(input_image, (128, 128))
     input_mask = tf.image.resize(input_mask, (128, 128))
@@ -6,7 +15,6 @@ def normalize(input_image, input_mask):
     print(input_image.shape, input_mask.shape)
     # input_mask -= 1
     return input_image, input_mask
-
 
 def process_path(image_path):
     # trim 'i.jpg' from path and replace with 'mask.jpg'
@@ -18,35 +26,19 @@ def process_path(image_path):
 
     image_decoded = tf.image.decode_jpeg(image_string, channels=3)
     mask_decoded = tf.image.decode_jpeg(mask_string, channels=1)
-    # print('image decoded type', type(image_decoded))
-
-
-    # input_image, input_mask = tf.image.decode_jpeg(, tf.image.decode_jpeg(
-
-    # image, mask = normalize(image_decoded, mask_decoded)
-
-    # print(image.shape, mask.shape)
-
+    # print('image decoded type', type(image_decoded)
 
     return image_decoded, mask_decoded
 
 # def data_gen(X=None, y=None, batch_size=32, nb_epochs=1, sess=None):
-def generate_dataset_from_local(split='train'):
-    
-    # Create tensorflow dataset generator from directory of training examples:
-    filepaths_ds = tf.data.Dataset.list_files('data/'+split+'/*[i]*')
-    # print('sample file string tensor: ', next(iter(filepaths_ds)))
-    labeled_ds = filepaths_ds.map(process_path)
-    # print(type(labeled_ds))
+def load_dataset(directory='data/train'):
 
-    # # Test generator:
-    # for f in train_ds.take(5):
-    #     print(f.numpy())
+    image_file_pattern = directory + '/images/*.jpg'
+    mask_file_pattern = directory + '/masks/*.jpg'
 
-    # Test proper read of image binaries
-    # for image_raw, label_raw in dataset.take(1):
-    #     print(repr(image_raw.numpy()[:100]))
-    #     print()
-    #     print(repr(label_raw.numpy()[:100]))
+    tf.data.Dataset()
 
-    return labeled_ds
+    image_ds = tf.data.Dataset.list_files(image_file_pattern, shuffle=False)
+    mask_ds = tf.data.Dataset.list_files(mask_file_pattern, shuffle=False)
+
+    zip_ds = tf.data.Dataset.zip((image_ds, mask_ds))

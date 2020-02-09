@@ -17,6 +17,7 @@ import json
 from pipeline.ingest import get_scene_and_labels
 from pipeline.scan_scenes import update_scan_log, get_scene_ids, save_scene_tiles
 from pipeline.model import *
+from pipeline.
 
 # Getting rid of those damn CRS warnings.
 import warnings
@@ -126,23 +127,12 @@ def test_tile_and_mask_write():
     tile.write_data('data/test')
 
 
+# ––––––––––––––––––––––––––––––––––––––––
+# –––––––– MAIN FUNCTION –––––––––––––––––
+# ––––––––––––––––––––––––––––––––––––––––
+
+# Use this to quickly test functions.
 
 
 if __name__=='__main__':
-    # generate_dataset_from_local()
-    # model_history = run_model_workflow()
     run_model_5()
-
-#     image_datagen = tf.keras.preprocessing.image.ImageDataGenerator(**data_gen_args)
-#     mask_datagen = tf.keras.preprocessing.image.ImageDataGenerator(**data_gen_args)
-#     seed = 1
-
-# print(os.listdir())
-
-# image_generator = image_datagen.flow_from_directory(directory='data/train/images', target_size=(1024, 1024),
-#                                                         class_mode=None, seed=seed, batch_size=64)
-
-
-
-# mask_generator = mask_datagen.flow_from_directory('data/train/masks', target_size=(1024, 1024),
-#                                                     class_mode=None, seed=seed, batch_size=64)

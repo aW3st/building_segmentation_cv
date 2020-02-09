@@ -7,6 +7,7 @@ __pycache__/
 *.so
 
 # Distribution / packaging
+.vscode
 .Python
 build/
 develop-eggs/
@@ -128,4 +129,6 @@ dmypy.json
 # Pyre type checker
 .pyre/
 
-/data/train
+/data
+model.png
+google_creds.sh
