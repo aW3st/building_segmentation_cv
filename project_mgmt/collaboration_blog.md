@@ -24,3 +24,5 @@ Thomas had reviewed the image segmentation example from Tensorflow, and learned 
 // Synced repo with a new Google Cloud projects
 
 // Alex researched deployment tech ... mess
+
+// spent forever figuring out how to load the dataset into tensorflow
