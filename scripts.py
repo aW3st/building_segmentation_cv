@@ -17,7 +17,6 @@ import json
 from pipeline.ingest import get_scene_and_labels
 from pipeline.scan_scenes import update_scan_log, get_scene_ids, save_scene_tiles
 from pipeline.model import *
-from pipeline.
 
 # Getting rid of those damn CRS warnings.
 import warnings
@@ -120,6 +119,8 @@ def test_tile_and_mask_write():
     metadata, base_url = get_hosted_urls()
 
     scene, labels = get_scene_and_labels(scene_id='d41d81')
+
+    pdb.set_trace()
 
     tile = Tile(scene, labels, scene.height//2, scene.width//2, 'blahblah')
     tile.get_mask()

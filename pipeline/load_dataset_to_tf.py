@@ -5,7 +5,7 @@ import sys
 
 import tensorflow as tf
 
-tf.data.Dataset()
+tf.
 
 def normalize(input_image, input_mask):
     input_image = tf.image.resize(input_image, (128, 128))
@@ -31,7 +31,7 @@ def process_path(image_path):
     return image_decoded, mask_decoded
 
 # def data_gen(X=None, y=None, batch_size=32, nb_epochs=1, sess=None):
-def load_dataset(directory='data/train'):
+def load_dataset(directory='data/train'): cZ
 
     image_file_pattern = directory + '/images/*.jpg'
     mask_file_pattern = directory + '/masks/*.jpg'
