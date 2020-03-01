@@ -10,13 +10,11 @@
 # Purpose of this file is to collect top-level management scripts into neat methods.
 # To test basic functions, run pytest from command-line on this file.
 
-import pytest
 from tqdm import tqdm
 import json
 
-from pipeline.ingest import get_scene_and_labels
+from pipeline.ingest import get_scene_and_labels, Tile
 from pipeline.scan_scenes import update_scan_log, get_scene_ids, save_scene_tiles
-from pipeline.model import *
 
 # Getting rid of those damn CRS warnings.
 import warnings
@@ -25,6 +23,7 @@ warnings.simplefilter(action='ignore', category=FutureWarning)
 import logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger()
+from pipeline.train import train_fastfcn_mod
 
 
 def collect_scene_information():
@@ -36,7 +35,7 @@ def collect_scene_information():
 
     for scene_id in scene_ids:
         logger.info('Collecting info on scene',scene_id)
-        scene, labels = get_scene_and_labels(scene_id)
+        scene, _ = get_scene_and_labels(scene_id)
         
         scene_url = scene.name
         scene_info = {
@@ -96,9 +95,35 @@ def scan_scenes_to_local(limit=10):
     return True
 
 
-def scratch():
-    update_scan_log()
-    get_scene_ids()
+# ––––––––––––––––––––––––––––––––––––––––
+# –––––––– MAIN FUNCTION –––––––––––––––––
+# ––––––––––––––––––––––––––––––––––––––––
+
+# Use this to quickly test functions.
+
+
+if __name__=='__main__':
+    train_fastfcn_mod()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -126,14 +151,3 @@ def test_tile_and_mask_write():
     tile.get_mask()
     tile.plot(mask=True)
     tile.write_data('data/test')
-
-
-# ––––––––––––––––––––––––––––––––––––––––
-# –––––––– MAIN FUNCTION –––––––––––––––––
-# ––––––––––––––––––––––––––––––––––––––––
-
-# Use this to quickly test functions.
-
-
-if __name__=='__main__':
-    run_model_5()

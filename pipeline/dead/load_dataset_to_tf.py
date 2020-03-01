@@ -5,8 +5,6 @@ import sys
 
 import tensorflow as tf
 
-tf.
-
 def normalize(input_image, input_mask):
     input_image = tf.image.resize(input_image, (128, 128))
     input_mask = tf.image.resize(input_mask, (128, 128))

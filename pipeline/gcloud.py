@@ -1,6 +1,6 @@
 # Imports the Google Cloud client library
-from google.cloud import storage
-import sys
+
+from google import storage
 
 def upload_blob(bucket_name, source_file_name, destination_blob_name=None):
     """
