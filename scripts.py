@@ -49,7 +49,7 @@ def collect_scene_information():
             'lnglat': str(scene.lnglat()),
             'scene_url': scene_url,
             'city': scene_url.split('/')[-3],
-            'tier': scene_url.split('/')[-4].split('_')[-1]
+            'tier': scene_url.split('/')[-4].split('_')[-1],
             'res': scene.res # how large each pixel is, in the units of the CRS
             }
         scenes[scene_id] = scene_info
