@@ -40,7 +40,7 @@ def save_scene_tiles(scene_id, path='./data/train'):
     scene, labels = get_scene_and_labels(scene_id=scene_id)
     for x_pos in tqdm((range(0, scene.height, 1024)), desc='x_pos', position=0):
         for y_pos in range(0, scene.width, 1024):
-            tile = Tile(scene, labelshttps://stackoverflow.com/questions/7395542/is-explicitly-closing-files-importanthttps://stackoverflow.com/questions/7395542/is-explicitly-closing-files-important, x_pos, y_pos, scene_id)
+            tile = Tile(scene, labels, x_pos, y_pos, scene_id)
             tile.get_mask()
             if tile.tile is not None:
                 if tile.mask is not None:
