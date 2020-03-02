@@ -16,13 +16,13 @@ from rasterio.windows import Window, bounds
 from shapely.geometry import Polygon, box
 import pdb
 # Tensorflow stuff
-import tensorflow as tf
+# import tensorflow as tf
 from tqdm import tqdm
 
-from IPython.display import clear_output
+# from IPython.display import clear_output
 import matplotlib.pyplot as plt
 
-assert tf.version.VERSION[0] == '2', "Must use TF Version 2.x"
+# assert tf.version.VERSION[0] == '2', "Must use TF Version 2.x"
 
 # ----------------------------- #
 # Hosted dataset URLs + prefixes

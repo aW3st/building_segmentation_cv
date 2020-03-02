@@ -4,20 +4,20 @@
 # ------------------------------------------
 # ------------------------------------------
 
-import pandas as pd
+# import pandas as pd
 import numpy as np
 
-import pdb
+# import pdb
 
-from tqdm import tqdm
-import sys, os
+# from tqdm import tqdm
+import os
 
 import torch
 from torch.utils.data import Dataset, DataLoader
 import torchvision.transforms as transforms
-from torchvision import models
-from torch import nn, optim
-from torch.optim import lr_scheduler
+# from torchvision import models
+from torch import nn # optim
+# from torch.optim import lr_scheduler
 from torch.nn import Module, Sequential, Conv2d, ReLU, AdaptiveAvgPool2d, BCELoss, CrossEntropyLoss
 import torch.nn.functional as F
 
@@ -27,64 +27,65 @@ import math
 
 from FastFCN import encoding
 from FastFCN.encoding import dilated as resnet
+from FastFCN.encoding.utils import batch_pix_accuracy, batch_intersection_union
 
 
 # ---- Image Utitilies ----
 
 
 def mytransform(image, mask):
-  '''
-  Custom Pytorch randomized preprocessing of training image and mask.
-  '''
-  image = transforms.functional.pad(image, padding=0, padding_mode='reflect')
-  crop_loc = np.random.randint(0, 728, 2)
-  image = transforms.functional.crop(image, *crop_loc, 512, 512)
-  mask = transforms.functional.crop(mask, *crop_loc, 512, 512)
-  image = transforms.functional.to_tensor(image)
-  mask = transforms.functional.to_tensor(mask)
-  return image, mask
+    '''
+    Custom Pytorch randomized preprocessing of training image and mask.
+    '''
+    image = transforms.functional.pad(image, padding=0, padding_mode='reflect')
+    crop_loc = np.random.randint(0, 728, 2)
+    image = transforms.functional.crop(image, *crop_loc, 512, 512)
+    mask = transforms.functional.crop(mask, *crop_loc, 512, 512)
+    image = transforms.functional.to_tensor(image)
+    mask = transforms.functional.to_tensor(mask)
+    return image, mask
 
-# ---- Dataset Class ----
+    # ---- Dataset Class ----
 
 class MyDataset(Dataset):
-  '''
-  Custom PyTorch Dataset class.
-  '''
-  def __init__(self, path='/tmp', transforms=None):
-    self.path = path
-    self.transforms = transforms
-    self.images = list(sorted(os.listdir(os.path.join(path, 'images'))))
-    self.masks = list(sorted(os.listdir(os.path.join(path, 'masks'))))
-    self.coordinates = None
+    '''
+    Custom PyTorch Dataset class.
+    '''
+    def __init__(self, path='tmp', transforms=None):
+        self.path = path
+        self.transforms = transforms
+        self.images = list(sorted(os.listdir(os.path.join(path, 'images'))))
+        self.masks = list(sorted(os.listdir(os.path.join(path, 'masks'))))
+        self.coordinates = None
 
-  def __getitem__(self, index):
-    print(index)
-    image = Image.open(os.path.join(self.path, 'images', self.images[index]))
-    mask = Image.open(os.path.join(self.path, 'masks', self.masks[index]))
-    if self.transforms is not None:
-      image, mask = self.transforms(image, mask)
-    return (image, mask)
+    def __getitem__(self, index):
+        # print(index)
+        image = Image.open(os.path.join(self.path, 'images', self.images[index]))
+        mask = Image.open(os.path.join(self.path, 'masks', self.masks[index]))
+        if self.transforms is not None:
+            image, mask = self.transforms(image, mask)
+        return (image, mask)
 
-  def __len__(self):
-    return len(self.images)
+    def __len__(self):
+        return len(self.images)
 
 
 # ---- Load Dataset ----
 
-def get_dataset_and_loader(path='/tmp'):
-  '''
-  Load pytorch dataset and batch data loader
-  '''
-  dataset = MyDataset('/tmp', transforms=mytransform)
-  batch_loader = DataLoader(dataset, shuffle=True, batch_size=4)
-  print('Dataset Loaded:')
+def get_dataset_and_loader(path='tmp'):
+    '''
+    Load pytorch dataset and batch data loader
+    '''
+    dataset = MyDataset(path, transforms=mytransform)
+    batch_loader = DataLoader(dataset, shuffle=True, batch_size=4)
+    print('Dataset Loaded:')
 
-  sample = dataset[0]
-  print('Data Unit Shape -', sample[0].shape)
-  sample_batch = next(iter(batch_loader))
-  print('Batch Shape -', sample_batch[0].shape)
+    sample = dataset[0]
+    print('Data Unit Shape -', sample[0].shape)
+    sample_batch = next(iter(batch_loader))
+    print('Batch Shape -', sample_batch[0].shape)
 
-  return dataset, batch_loader
+    return dataset, batch_loader
 
 # ------------------------------------------
 # ------------------------------------------
@@ -92,21 +93,20 @@ def get_dataset_and_loader(path='/tmp'):
 # ------------------------------------------
 # ------------------------------------------
 
-
 # ---- Segmentation Loss ----
 
 class SegmentationLosses(CrossEntropyLoss):
     """2D Cross Entropy Loss with Auxilary Loss"""
     def __init__(self, se_loss=False, se_weight=0.2, nclass=-1,
                  aux=False, aux_weight=0.4, weight=None,
-                 size_average=True, ignore_index=-1):
-        super(SegmentationLosses, self).__init__(weight, size_average, ignore_index)
+                 ignore_index=-1):
+        super(SegmentationLosses, self).__init__(weight, ignore_index)
         self.se_loss = se_loss
         self.aux = aux
         self.nclass = nclass
         self.se_weight = se_weight
         self.aux_weight = aux_weight
-        self.bceloss = BCELoss(weight, size_average) 
+        self.bceloss = BCELoss(weight)
 
     def forward(self, *inputs):
         if not self.se_loss and not self.aux:
@@ -177,7 +177,7 @@ class LR_Scheduler(object):
         elif self.mode == 'step':
             lr = self.lr * (0.1 ** (epoch // self.lr_step))
         else:
-            raise NotImplemented
+            raise NotImplementedError
         # warm up lr schedule
         if self.warmup_iters > 0 and T < self.warmup_iters:
             lr = lr * 1.0 * T / self.warmup_iters
@@ -206,7 +206,8 @@ class LR_Scheduler(object):
 
 
 # ----- Base Network ----- #
-up_kwargs = {'mode': 'bilinear', 'align_corners': True}
+UP_KWARGS = {'mode': 'bilinear', 'align_corners': True}
+
 class BaseNet(nn.Module):
     def __init__(self, nclass, backbone, aux, se_loss, jpu=True, dilated=False, norm_layer=None,
                  base_size=520, crop_size=480, mean=[.485, .456, .406],
@@ -233,11 +234,11 @@ class BaseNet(nn.Module):
             raise RuntimeError('unknown backbone: {}'.format(backbone))
         # don't keep track of gradients in pretrained model!
         for param in self.pretrained.parameters():
-          param.requires_grad = False
+            param.requires_grad = False
         # bilinear upsample options
-        self._up_kwargs = up_kwargs
+        self._up_kwargs = UP_KWARGS
         self.backbone = backbone
-        self.jpu = JPU([512, 1024, 2048], width=512, norm_layer=norm_layer, up_kwargs=up_kwargs) if jpu else None
+        self.jpu = JPU([512, 1024, 2048], width=512, norm_layer=norm_layer, up_kwargs=self._up_kwargs) if jpu else None
 
     def base_forward(self, x):
         x = self.pretrained.conv1(x)
@@ -431,8 +432,8 @@ class JPU(nn.Module):
     def forward(self, *inputs):
         feats = [self.conv5(inputs[-1]), self.conv4(inputs[-2]), self.conv3(inputs[-3])]
         _, _, h, w = feats[-1].size()
-        feats[-2] = F.upsample(feats[-2], (h, w), **self.up_kwargs)
-        feats[-3] = F.upsample(feats[-3], (h, w), **self.up_kwargs)
+        feats[-2] = F.interpolate(feats[-2], (h, w), **self.up_kwargs)
+        feats[-3] = F.interpolate(feats[-3], (h, w), **self.up_kwargs)
         feat = torch.cat(feats, dim=1)
         feat = torch.cat([self.dilation1(feat), self.dilation2(feat), self.dilation3(feat), self.dilation4(feat)], dim=1)
 
@@ -448,71 +449,12 @@ class JPU(nn.Module):
 
 
 
-def get_model():
+def get_model(args):
     ''' Return Modified EncNet / FastFCN, with ResNet backbone.'''
 
-    options = {
-            'model': 'encnet', # model name (default: encnet)
-            'backbone': 'resnet50', # backbone name (default: resnet50)
-            'jpu': True, # 'JPU'
-            'dilated': False, # 'dilation'
-            'lateral': False, #'employ FPN')
-            'dataset':'ade20k', # 'dataset name (default: pascal12)')
-            'workers': 16, # dataloader threads
-            'base_size': 520, # 'base image size'
-            'crop_size': 480, # 'crop image size')
-            'train_split':'train', # 'dataset train split (default: train)'
+    # UP_KWARGS = {'mode': 'bilinear', 'align_corners': True}        
 
-            # training hyper params
-            'aux': True, # 'Auxilary Loss'
-            'aux_weight': 0.2, # 'Auxilary loss weight (default: 0.2)'
-            'se_loss': True, # 'Semantic Encoding Loss SE-loss'
-            'se_weight': 0.2, # 'SE-loss weight (default: 0.2)'
-            'epochs': None, # 'number of epochs to train (default: auto)'
-            'start_epoch': 0, # 'start epochs (default:0)'
-            'batch_size': None, # 'input batch size for training (default: auto)'
-            'test_batch_size': None, # 'input batch size for testing (default: same as batch size)'
-
-            # optimizer params
-            'lr': None, # 'learning rate (default: auto)'
-            'lr_scheduler': 'poly', # 'learning rate scheduler (default: poly)'
-            'momentum': 0.9, # 'momentum (default: 0.9)'
-            'weight_decay': 1e-4, # 'w-decay (default: 1e-4)'
-
-            # cuda, seed and logging
-            'no_cuda': False, # 'disables CUDA training'
-            'seed': 1, # 'random seed (default: 1)'
-
-            # checking point
-            'resume': None, # 'put the path to resuming file if needed'
-            'checkname': 'default', # 'set the checkpoint name'
-            'model-zoo': None, # 'evaluating on model zoo model'
-
-            # finetuning pre-trained models
-            'ft': False, # 'finetuning on a different dataset'
-
-            # evaluation option
-            'split': 'val',
-            'mode': 'testval',
-            'ms': False, # 'multi scale & flip'
-            'no_val': False, # 'skip validation during training'
-            'save-folder': 'experiments/segmentation/results', # 'path to save images'
-            
-    }
-    up_kwargs = {'mode': 'bilinear', 'align_corners': True}        
-
-    class objectview(object):
-        '''
-        Helper class to access dict values as attributes.
-
-        Replaces command-line arg-parse options.
-        '''
-        def __init__(self, d):
-            self.__dict__ = d
-
-    # Convert dict to attribute dict
-    args = objectview(options)
-    args.cuda = not args.no_cuda and torch.cuda.is_available()
+    
     # default settings for epochs, batch_size and lr
     if args.epochs is None:
         epoches = {

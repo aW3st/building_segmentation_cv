@@ -1,6 +1,7 @@
-# –––––––––––––––––––––––––––––––––––––––––
-# –––––––––––––––– MAIN––––––––––––––––––––
-# –––––––––––––––––––––––––––––––––––––––––
+
+# -----------------------------------------
+# -------------- Scripts ---------------------
+# -----------------------------------------
 
 # This module also is meant to make scratchpad work easier.
 # To this end, from interactive shell, run:
@@ -10,19 +11,19 @@
 # Purpose of this file is to collect top-level management scripts into neat methods.
 # To test basic functions, run pytest from command-line on this file.
 
-from tqdm import tqdm
 import json
+# from tqdm import tqdm
 
-from pipeline.ingest import get_scene_and_labels, Tile
-from pipeline.scan_scenes import update_scan_log, get_scene_ids, save_scene_tiles
+import pdb
 
 # Getting rid of those damn CRS warnings.
 import warnings
 warnings.simplefilter(action='ignore', category=FutureWarning)
-
 import logging
 logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger()
+
+from pipeline.ingest import get_scene_and_labels, Tile
+from pipeline.scan_scenes import update_scan_log, get_scene_ids, save_scene_tiles
 from pipeline.train import train_fastfcn_mod
 
 
@@ -31,12 +32,14 @@ def collect_scene_information():
     Store certain scene information for better analytics.
     '''
     scene_ids = get_scene_ids()
+    print(scene_ids)
     scenes = {}
 
     for scene_id in scene_ids:
-        logger.info('Collecting info on scene',scene_id)
+        m = 'Collecting info on scene ' + str(scene_id)
+        print(m)
+        logging.info(m)
         scene, _ = get_scene_and_labels(scene_id)
-        
         scene_url = scene.name
         scene_info = {
             'scene_id':scene_id,
@@ -50,7 +53,7 @@ def collect_scene_information():
             }
         scenes[scene_id] = scene_info
 
-    with open('data/scene_log.json','w') as file:
+    with open('data/scene_log.json', 'w') as file:
         json.dump(scenes, file, ensure_ascii=False, indent=4)
 
     return scenes
@@ -71,7 +74,7 @@ def scan_scenes_to_local(limit=10):
     scene_list = get_scene_ids()
 
     # A json with a few pieces of helpful information.
-    with open('data/scene_log.json','r') as file:
+    with open('data/scene_log.json', 'r') as file:
         scene_info = json.load(file)
 
     count = 0
@@ -79,13 +82,14 @@ def scan_scenes_to_local(limit=10):
         if count > limit:
             break
         if scene_id not in scanned_scenes:
-            logger.info(f'{scene_id} already scanned')
+            pass
+            # logging.info(f'{scene_id} already scanned')
         else:
             # Get basic scene info.
-            logger.info('Looking up scene id:', scene_id)
+            # logging.info(f'Looking up scene id: {scene_id}')
             s_info = scene_info[scene_id]
-            blk_ct = s_info['blocks']
-            logger.info(f'{scene_id} has {blk_ct} blocks')
+            _ = s_info['blocks']
+            # logging.info(f'{scene_id} has {blk_ct} blocks')
             if int(s_info['blocks']) < 2000:
                 save_scene_tiles(scene_id)
                 count += 1
@@ -95,9 +99,9 @@ def scan_scenes_to_local(limit=10):
     return True
 
 
-# ––––––––––––––––––––––––––––––––––––––––
-# –––––––– MAIN FUNCTION –––––––––––––––––
-# ––––––––––––––––––––––––––––––––––––––––
+# -----------------------------------------
+# -------------- Main ---------------------
+# -----------------------------------------
 
 # Use this to quickly test functions.
 
@@ -124,12 +128,9 @@ if __name__=='__main__':
 
 
 
-
-
-
-# ––––––––––––––––––––––––––––––––––––––––
-# –––––––– TESTING FUNCTIONS –––––––––––––
-# ––––––––––––––––––––––––––––––––––––––––
+# -----------------------------------------
+# -------------- Test ---------------------
+# -----------------------------------------
 #
 # Run tests from command line with pytest:
 #  $ pytest main.py
@@ -141,7 +142,7 @@ def test_tile_and_mask_write():
     '''
     Testing function for tile and mask writing.
     '''
-    metadata, base_url = get_hosted_urls()
+    # metadata, base_url = get_hosted_urls()
 
     scene, labels = get_scene_and_labels(scene_id='d41d81')
 
