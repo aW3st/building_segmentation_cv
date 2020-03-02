@@ -201,6 +201,31 @@ def ingest_scenes(scene_ids, path_out='/scenes'):
         generate_tf_tiles_from_scene(scene_id, metadata, limit=10, write_to=path_out)
 
 
+class Scene:
+    def __init__(self, scene_id):
+        self.scene_id = scene_id
+        base_url = 'https://drivendata-competition-building-segmentation.s3-us-west-1.amazonaws.com/'
+        metadata = pd.read_csv('https://s3.amazonaws.com/drivendata/data/60/public/train_metadata.csv')
+        row = metadata[metadata['img_uri'].str.contains(scene_id)]
+        self.img_uri, self.label_uri = row['img_uri'].values[0], row['label_uri'].values[0]
+        self.scene = rasterio.open(base_url + self.img_uri)
+        self.labels = gpd.read_file(base_url + self.label_uri).to_crs(self.scene.crs.data)
+
+    def get_tile(self, x_pos, y_pos, size):
+        return Tile(self.scene, self.labels, x_pos, y_pos, self.scene_id, size)
+
+    def plot_random(self, size):
+        while True:
+            x_pos = np.random.randint(0, self.scene.width - size)
+            y_pos = np.random.randint(0, self.scene.height - size)
+            myTile = self.get_tile(x_pos, y_pos, size)
+            if myTile.alpha_pct < 0.5:
+                break
+        print((x_pos, y_pos))
+        print(myTile.alpha_pct)
+        myTile.plot(mask=True)
+        return myTile
+
 class Tile():
 
     def __init__(self, scene, labels, xpos, ypos, scene_id):
@@ -213,34 +238,38 @@ class Tile():
         self.tile = self.scene.read(window=self.window)[:3]
         self.alpha_pct = 1 - np.count_nonzero(self.tile[0]) / self.tile[0].size
         self.window_transform = rasterio.windows.transform(self.window, self.scene.transform)
+        self.mask = None
+        self.label_intersection = None
 
-    def get_mask(self):
+    def get_mask(self, numpy=True):
         window_coords = bounds(self.window, self.scene.transform)
         boundingbox = box(*window_coords)
         boolmask = self.labels.intersects(boundingbox)
-        self.label_intersection = self.labels.intersection(boundingbox)[boolmask]
+        self.label_intersection = self.labels[boolmask].intersection(boundingbox)
 
-        #if there are no buildings in tile, mask should be all zeros
-        if self.label_intersection.empty:
-            self.mask = np.zeros((1, 1024, 1024))
-            return self.mask
+        # if there are no buildings in tile, mask should be all zeros
+        if numpy:
+            if self.label_intersection.empty:
+                self.mask = np.zeros((1, 1024, 1024))
+                return self.mask
+            else:
+                self.mask = rasterio.features.geometry_mask(mytile.label_intersection, out_shape=(1024, 1024),
+                                                            transform=mytile.window_transform, invert=True)
+                return self.mask
         else:
-            self.mask = rasterio.mask.raster_geometry_mask(self.scene, self.label_intersection, invert=True)
-            # raster_geometry_mask returns an array of shape (img.height, img.width), need to slice the portion we want
-            self.mask = np.expand_dims(self.mask[0][self.ypos:self.ypos + 1024, self.xpos:self.xpos + 1024].astype(np.float32), axis=0)
-            return self.mask
+            return self.label_intersection
 
-    def plot(self, mask=False):
-        fig, ax = plt.subplots(figsize=(15,15))
-        rasterio.plot.show(self.tile, transform = self.window_transform, ax = ax)
+    def plot(self, mask=False, alpha=0.5):
+        fig, ax = plt.subplots(figsize=(15, 15))
+        rasterio.plot.show(self.tile, transform=self.window_transform, ax=ax)
         if mask:
-            if self.mask is None:
-                self.get_mask()
-            self.label_intersection.plot(ax=ax)
+            if self.label_intersection is None:
+                self.get_mask(numpy=False)
+            self.label_intersection.plot(alpha=alpha, ax=ax)
 
     def write_data(self, path):
-        image = tf.keras.preprocessing.image.array_to_img(self.tile, data_format='channels_first')
-        mask = tf.keras.preprocessing.image.array_to_img(self.mask, data_format='channels_first')
+        image = torchvision.transforms.functional.to_pil_image(self.tile)
+        mask = torchvision.transforms.functional.to_pil_image(self.mask)
         image.save(path+self.scene_id+"_"+str(self.xpos)+"_"+str(self.ypos)+"_i.jpg")
         mask.save(path+self.scene_id+"_"+str(self.xpos)+"_"+str(self.ypos)+"_mask.jpg")
 
