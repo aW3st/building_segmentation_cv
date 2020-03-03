@@ -251,8 +251,8 @@ class Tile():
                 self.mask = np.zeros((1024, 1024,1), dtype=np.uint8)
                 return self.mask
             else:
-                self.mask = rasterio.features.geometry_mask(self.label_intersection, out_shape=(1024, 1024),
-                                                            transform=self.window_transform, invert=True)
+                self.mask = rasterio.features.featurize(self.label_intersection, out_shape=(1024, 1024),
+                                                            transform=self.window_transform, dtype=np.uint8)
                 return self.mask
         else:
             return self.label_intersection

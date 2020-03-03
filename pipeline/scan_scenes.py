@@ -1,6 +1,6 @@
 from ingest import Tile, Scene
 from tqdm import tqdm
-from os import listdir
+from os import listdir, remove
 from os.path import isfile, join
 import pandas as pd, logging
 from gcloud import upload_blob
@@ -69,7 +69,9 @@ def scan_scenes(path):
                 tile.write_data(path)
                 upload_blob(bucketname, os.path.join(path, 'images', filename+'_i.jpg'))
                 upload_blob(bucketname, os.path.join(path, 'masks', filename+'_mask.jpg'))
-                pdb.set_trace()
+                remove(os.path.join(path, 'images', filename+'_i.jpg'))
+                remove(os.path.join(path, 'masks', filename+'_mask.jpg'))
+
         image.scene.close()
 if __name__=='__main__':
     bucketname = "satellite_tiles2"
