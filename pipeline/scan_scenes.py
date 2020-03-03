@@ -1,14 +1,18 @@
-from pipeline.ingest import Tile, generate_tile_and_mask, get_hosted_urls, get_scene_and_labels
+from ingest import Tile, Scene
 from tqdm import tqdm
 from os import listdir
 from os.path import isfile, join
 import pandas as pd, logging
+from gcloud import upload_blob
+import pdb
+import os
 logging.basicConfig(level=(logging.INFO))
 logger = logging.getLogger()
 import warnings
 warnings.simplefilter(action='ignore', category=FutureWarning)
 metadata = pd.read_csv('https://s3.amazonaws.com/drivendata/data/60/public/train_metadata.csv')
 base_url = 'https://drivendata-competition-building-segmentation.s3-us-west-1.amazonaws.com/'
+
 
 def update_scan_log():
     """
@@ -31,34 +35,44 @@ def get_scene_ids():
     Retrieve a list of scene_id's from the metadata list.
     """
     scene_ids = [row.split('/')[(-2)] for row in metadata['img_uri'].values]
-    print(scene_ids)
+    # print(scene_ids)
     return scene_ids
 
 
-def save_scene_tiles(scene_id, path='./data/train'):
-    """Scan entire scene for a given scene id."""
-    scene, labels = get_scene_and_labels(scene_id=scene_id)
-    for x_pos in tqdm((range(0, scene.height, 1024)), desc='x_pos', position=0):
-        for y_pos in range(0, scene.width, 1024):
-            tile = Tile(scene, labels, x_pos, y_pos, scene_id)
-            tile.get_mask()
-            if tile.tile is not None:
-                if tile.mask is not None:
-                    if tile.tile[0].shape != (1024, 1024):
-                        print('Tile not correct dimensions.')
-                        continue
-                if tile.tile[0].shape != tile.mask[0].shape:
-                    logger.info(f"tile and shape mismatch at {(x_pos, y_pos)}: {tile.tile[0].shape} != {tile.mask[0].shape}")
+def scan_scenes(path):
+    """
+    scans each scene in metadata for tiles and uploads tiles to GCP bucket
+    """
+    scene_ids = get_scene_ids()
+    for id in scene_ids:
+        print(f'scanning {id}')
+        image = Scene(id)
+        for x_pos in tqdm((range(0, image.scene.height, 1024)), desc='x_pos', position=0):
+            for y_pos in range(0, image.scene.width, 1024):
+                tile = image.get_tile(x_pos, y_pos, 1024)
+                tile.get_mask()
+                if tile.alpha_pct>0.5:
+                    logger.info(f'Not enough data in tile {x_pos, y_pos}')
                     continue
-                else:
-                    if tile.alpha_pct > 0.5:
-                        logger.info(f"Too many empty pixels at {x_pos}, {y_pos}.")
-                        continue
-                    else:
-                        if tile.label_intersection.empty:
-                            pass
-                tile.write_data('data/train/')
-            continue
+                try:
+                    assert tile.tile[0].shape==(1024,1024)
+                except:
+                    logger.info(f'wrong tile shape at {x_pos,y_pos}: {tile.tile.shape}')
+                    continue
+                try:
+                    assert tile.tile.shape[1:]==tile.mask.shape[:2]
+                except:
+                    logger.info(f'tile/mask mismatch at {x_pos, y_pos}')
+                    pdb.set_trace()
+                    continue
+                filename = id+'_'+str(x_pos)+"_"+str(y_pos)
+                tile.write_data(path)
+                upload_blob(bucketname, os.path.join(path, 'images', filename+'_i.jpg'))
+                upload_blob(bucketname, os.path.join(path, 'masks', filename+'_mask.jpg'))
+                pdb.set_trace()
+        image.scene.close()
+if __name__=='__main__':
+    bucketname = "satellite_tiles2"
+    scan_scenes('data/train')
 
-    scene.close()
-    return True
+

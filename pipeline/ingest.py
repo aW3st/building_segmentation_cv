@@ -2,13 +2,11 @@
 # STAC and Geospatial Ingest
 # ----------------------------- #
 
-import os
-from urllib.parse import urlparse
-import requests
 import geopandas as gpd
-import matplotlib.pyplot as plt
+import torchvision
 import pandas as pd
 import rasterio
+import os.path
 import numpy as np
 import rasterio.plot
 from rasterio.mask import raster_geometry_mask
@@ -211,7 +209,7 @@ class Scene:
         self.scene = rasterio.open(base_url + self.img_uri)
         self.labels = gpd.read_file(base_url + self.label_uri).to_crs(self.scene.crs.data)
 
-    def get_tile(self, x_pos, y_pos, size):
+    def get_tile(self, x_pos, y_pos, size=1024):
         return Tile(self.scene, self.labels, x_pos, y_pos, self.scene_id, size)
 
     def plot_random(self, size):
@@ -222,18 +220,18 @@ class Scene:
             if myTile.alpha_pct < 0.5:
                 break
         print((x_pos, y_pos))
-        print(myTile.alpha_pct)
         myTile.plot(mask=True)
         return myTile
 
 class Tile():
 
-    def __init__(self, scene, labels, xpos, ypos, scene_id):
+    def __init__(self, scene, labels, xpos, ypos, scene_id,size):
         self.scene = scene
         self.labels = labels.to_crs(self.scene.crs)
         self.xpos = xpos
         self.ypos = ypos
         self.scene_id = scene_id
+        self.size=size
         self.window = Window(xpos, ypos, 1024,1024)
         self.tile = self.scene.read(window=self.window)[:3]
         self.alpha_pct = 1 - np.count_nonzero(self.tile[0]) / self.tile[0].size
@@ -250,7 +248,7 @@ class Tile():
         # if there are no buildings in tile, mask should be all zeros
         if numpy:
             if self.label_intersection.empty:
-                self.mask = np.zeros((1, 1024, 1024))
+                self.mask = np.zeros((1024, 1024,1), dtype=np.uint8)
                 return self.mask
             else:
                 self.mask = rasterio.features.geometry_mask(mytile.label_intersection, out_shape=(1024, 1024),
@@ -268,10 +266,11 @@ class Tile():
             self.label_intersection.plot(alpha=alpha, ax=ax)
 
     def write_data(self, path):
-        image = torchvision.transforms.functional.to_pil_image(self.tile)
+        image = torchvision.transforms.functional.to_pil_image(np.transpose(self.tile, (2,0,1)))
         mask = torchvision.transforms.functional.to_pil_image(self.mask)
-        image.save(path+self.scene_id+"_"+str(self.xpos)+"_"+str(self.ypos)+"_i.jpg")
-        mask.save(path+self.scene_id+"_"+str(self.xpos)+"_"+str(self.ypos)+"_mask.jpg")
+        filename = self.scene_id+"_"+str(self.xpos)+"_"+str(self.ypos)
+        image.save(os.path.join(path,'images', filename+"_i.jpg"))
+        mask.save(os.path.join(path, 'masks', filename+'_mask.jpg'))
 
 
 
