@@ -251,8 +251,8 @@ class Tile():
                 self.mask = np.zeros((1024, 1024,1), dtype=np.uint8)
                 return self.mask
             else:
-                self.mask = rasterio.features.geometry_mask(mytile.label_intersection, out_shape=(1024, 1024),
-                                                            transform=mytile.window_transform, invert=True)
+                self.mask = rasterio.features.geometry_mask(self.label_intersection, out_shape=(1024, 1024),
+                                                            transform=self.window_transform, invert=True)
                 return self.mask
         else:
             return self.label_intersection
@@ -266,7 +266,7 @@ class Tile():
             self.label_intersection.plot(alpha=alpha, ax=ax)
 
     def write_data(self, path):
-        image = torchvision.transforms.functional.to_pil_image(np.transpose(self.tile, (2,0,1)))
+        image = torchvision.transforms.functional.to_pil_image(np.transpose(self.tile, (1,2,0)))
         mask = torchvision.transforms.functional.to_pil_image(self.mask)
         filename = self.scene_id+"_"+str(self.xpos)+"_"+str(self.ypos)
         image.save(os.path.join(path,'images', filename+"_i.jpg"))
