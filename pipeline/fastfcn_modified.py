@@ -55,7 +55,9 @@ class MyDataset(Dataset):
         self.path = path
         self.transforms = transforms
         self.images = list(sorted(os.listdir(os.path.join(path, 'images'))))
+        self.images = [fn for fn in self.images if fn.endswith('.jpg')]
         self.masks = list(sorted(os.listdir(os.path.join(path, 'masks'))))
+        self.masks = [fn for fn in self.masks if fn.endswith('.jpg')]
         self.coordinates = None
 
     def __getitem__(self, index):
@@ -72,6 +74,24 @@ class MyDataset(Dataset):
 
 # ---- Load Dataset ----
 
+def get_dataloader(path='tmp'):
+    '''
+    Load pytorch batch data loader only
+    '''
+    batch_loader = DataLoader(
+        MyDataset(path, transforms=mytransform),
+        shuffle=True, batch_size=4
+        )
+    print('Dataset Loaded:')
+
+    sample_batch = next(iter(batch_loader))[0]
+    print('Batch Shape -', sample_batch[0].shape)
+    print('Single Image Shape -', sample_batch[0][0].shape)
+    print('Single Mask Shape –', sample_batch[0][1].shape)
+    
+    return batch_loader
+
+
 def get_dataset_and_loader(path='tmp'):
     '''
     Load pytorch dataset and batch data loader
@@ -81,7 +101,8 @@ def get_dataset_and_loader(path='tmp'):
     print('Dataset Loaded:')
 
     sample = dataset[0]
-    print('Data Unit Shape -', sample[0].shape)
+    print('Single Image Shape -', sample[0].shape)
+    print('Single Mask Shape –', sample[1].shape)
     sample_batch = next(iter(batch_loader))
     print('Batch Shape -', sample_batch[0].shape)
 
