@@ -86,8 +86,6 @@ def load_model_with_weights(model_name=None):
 
 def output_to_pred_imgs(output, dim=1):
 
-
-
     np_pred = torch.max(output, dim=dim)[1].cpu().numpy()
     return img_from_bytes(np_pred)
 
@@ -110,12 +108,9 @@ def get_single_pred(model, img_name=None, img_path = None):
     
     # Predict
     with torch.no_grad():
-        output = model(img_tensor.view(-1, 3, 1024, 1024))[2]
-
-    np_pred = torch.max(output, 1)[1].numpy() * 255
-    out_img = Image.fromarray(np_pred.squeeze().astype('uint8'))
-    
-    
+        output = model(img_tensor.view(1, 3, 1024, 1024))[2]
+ 
+    out_img = output_to_pred_imgs(output)
 
     return out_img
 
@@ -141,7 +136,7 @@ def predict_test_set(model, model_name, output_path='model_outs/'):
         # Predict on image tensors
         with torch.no_grad():
             outputs = model(image_tensors)[2]
-            predict_imgs = [output_to_pred_imgs(output, dim=0) for output in outputs]
+            predict_imgs = [output_to_pred_imgs(output) for output in outputs]
 
         # Zip images, and save.
         for predict_img, img_name in zip(predict_imgs, img_names):
