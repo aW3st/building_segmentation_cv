@@ -60,11 +60,11 @@ class MyDataset(Dataset):
         if self.load_test:
             print('Loading Test')
             self.path = 'submission_data/test'
-            self.images = list(sorted(os.listdir(self.path)))
+            self.images = os.listdir(self.path)
         else:
             self.path = path
-            self.images = list(sorted(os.listdir(os.path.join(path, 'images'))))
-            self.masks = list(sorted(os.listdir(os.path.join(path, 'masks'))))
+            self.images = os.listdir(os.path.join(path, 'images'))
+            self.masks = os.listdir(os.path.join(path, 'masks'))
             self.images = [fn for fn in self.images if fn.endswith('.jpg')]
             self.masks = [fn for fn in self.masks if fn.endswith('.jpg')]
             self.coordinates = None

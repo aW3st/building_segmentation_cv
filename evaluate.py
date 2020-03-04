@@ -96,15 +96,15 @@ def get_single_pred(model, img_name=None, img_path = None):
     '''
     
     test_img_dir = 'submission_data/test'
-
+    device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
     # Predict on a sample image.
     if img_path is None:
         if img_name is None:
             img_name = '0a0a36'
         img_path = os.path.join(test_img_dir, f'{img_name}/{img_name}.tif')
 
-    img = Image.open(img_path).convert("RGB")
-    img_tensor = transforms.functional.to_tensor(img).cuda()
+    img = Image.open(img_path)
+    img_tensor = transforms.functional.to_tensor(img)[:3].to(device)
     
     # Predict
     with torch.no_grad():
