@@ -144,3 +144,7 @@ dmypy.json
 /data
 model.png
 google_creds.sh
+
+# gcloud keys and nohup logs
+mykey.json
+nohup.out
