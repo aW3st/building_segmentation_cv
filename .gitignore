@@ -1,5 +1,11 @@
 # Submission data folder for Driven Data Competition
 submission_data/
+tmp/
+
+
+# Trained Weights / Models / Outputs (too large to commit)
+models/
+*.pt
 
 # ---------------------
 

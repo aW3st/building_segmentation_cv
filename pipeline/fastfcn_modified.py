@@ -51,17 +51,33 @@ class MyDataset(Dataset):
     '''
     Custom PyTorch Dataset class.
     '''
-    def __init__(self, path='tmp', transforms=None):
-        self.path = path
+    def __init__(self, path='tmp', transforms=None, load_test=False):
+
         self.transforms = transforms
-        self.images = list(sorted(os.listdir(os.path.join(path, 'images'))))
-        self.masks = list(sorted(os.listdir(os.path.join(path, 'masks'))))
-        self.coordinates = None
+        self.load_test = load_test
+        
+        if self.load_test:
+            print('Loading Test')
+            self.path = 'submission_data/test'
+            self.images = list(sorted(os.listdir(self.path)))
+        else:
+            self.path = path
+            self.images = list(sorted(os.listdir(os.path.join(path, 'images'))))
+            self.masks = list(sorted(os.listdir(os.path.join(path, 'masks'))))
+            self.images = [fn for fn in self.images if fn.endswith('.jpg')]
+            self.masks = [fn for fn in self.masks if fn.endswith('.jpg')]
+            self.coordinates = None
 
     def __getitem__(self, index):
         # print(index)
-        image = Image.open(os.path.join(self.path, 'images', self.images[index]))
-        mask = Image.open(os.path.join(self.path, 'masks', self.masks[index]))
+        if self.load_test:
+            img_name = self.images[index]
+            image = Image.open(os.path.join(self.path, img_name, img_name + '.tif')).convert("RGB")
+            image_tensor = transforms.functional.to_tensor(image)
+            return image_tensor, img_name
+        else:
+            image = Image.open(os.path.join(self.path, 'images', self.images[index]))
+            mask = Image.open(os.path.join(self.path, 'masks', self.masks[index]))
         if self.transforms is not None:
             image, mask = self.transforms(image, mask)
         return (image, mask)
@@ -72,6 +88,25 @@ class MyDataset(Dataset):
 
 # ---- Load Dataset ----
 
+def get_dataloader(path='tmp', load_test=False, batch_size=16):
+    '''
+    Load pytorch batch data loader only
+    '''
+    print('Load test:', load_test)
+    batch_loader = DataLoader(
+        MyDataset(path, transforms=mytransform, load_test=load_test),
+        shuffle=True, batch_size=batch_size
+        )
+    print('Dataset Loaded:')
+
+    # sample_batch = next(iter(batch_loader))[0]
+    # print('Batch Shape -', sample_batch[0].shape)
+    # print('Single Image Shape -', sample_batch[0][0].shape)
+    # print('Single Mask Shape –', sample_batch[0][1].shape)
+    
+    return batch_loader
+
+
 def get_dataset_and_loader(path='tmp'):
     '''
     Load pytorch dataset and batch data loader
@@ -81,7 +116,8 @@ def get_dataset_and_loader(path='tmp'):
     print('Dataset Loaded:')
 
     sample = dataset[0]
-    print('Data Unit Shape -', sample[0].shape)
+    print('Single Image Shape -', sample[0].shape)
+    print('Single Mask Shape –', sample[1].shape)
     sample_batch = next(iter(batch_loader))
     print('Batch Shape -', sample_batch[0].shape)
 
