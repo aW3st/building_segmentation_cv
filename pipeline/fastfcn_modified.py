@@ -89,10 +89,12 @@ class MyDataset(Dataset):
 
 # ---- Load Dataset ----
 
-def get_dataloader(path='tmp', load_test=False, batch_size=16):
+def get_dataloader(path=None, load_test=False, batch_size=16):
     '''
     Load pytorch batch data loader only
     '''
+    if path is None:
+        path = 'tmp'
     print('Load test:', load_test)
     batch_loader = DataLoader(
         MyDataset(path, transforms=mytransform, load_test=load_test),
