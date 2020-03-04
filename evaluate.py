@@ -176,6 +176,9 @@ def predict_test_set(model, model_name, output_path='model_outs/'):
     tbar = tqdm(test_data)
     for i, (image_tensors, img_names) in enumerate(tbar):
 
+        # Load tensors to GPU
+        image_tensors = image_tensors.to(device)
+
         # Predict on image tensors
         with torch.no_grad():
             outputs = model(image_tensors)[2]
