@@ -9,6 +9,6 @@ from pipeline.train import train_fastfcn_mod
 if __name__=='__main__':
     
     train_fastfcn_mod(
-        num_epochs=1, reporting_int=5,
-        batch_size=16
+        num_epochs=5, reporting_int=5,
+        batch_size=16, MODEL_NICKNAME=five_epoch_single_region
         )

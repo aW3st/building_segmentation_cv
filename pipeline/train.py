@@ -20,7 +20,7 @@ class ObjectView:
         def __init__(self, d):
             self.__dict__ = d
 
-def train_fastfcn_mod(options=None, num_epochs=1, reporting_int=5, batch_size=16):
+def train_fastfcn_mod(options=None, num_epochs=1, reporting_int=5, batch_size=16, MODEL_NICKNAME=None):
     '''
     Compile and train the modified FastFCN implementation.
     '''
@@ -147,4 +147,4 @@ def train_fastfcn_mod(options=None, num_epochs=1, reporting_int=5, batch_size=16
 
         return None
 
-    save_model(model)
+    save_model(model, MODEL_NICKNAME)
