@@ -74,7 +74,7 @@ class MyDataset(Dataset):
         if self.load_test:
             img_name = self.images[index]
             image = Image.open(os.path.join(self.path, img_name, img_name + '.tif'))
-            image_tensor = transforms.functional.to_tensor(image)[:3] * 255
+            image_tensor = transforms.functional.to_tensor(image)[:3]
             return image_tensor, img_name
         else:
             image = Image.open(os.path.join(self.path, 'images', self.images[index]))
