@@ -11,14 +11,16 @@ import pipeline.fastfcn_modified as fcn_mod
 import os
 from datetime import datetime, timezone
 
-class ObjectView:
-        '''
-        Helper class to access dict values as attributes.
 
-        Replaces command-line arg-parse options.
-        '''
-        def __init__(self, d):
-            self.__dict__ = d
+class ObjectView:
+    '''
+    Helper class to access dict values as attributes.
+
+    Replaces command-line arg-parse options.
+    '''
+    def __init__(self, d):
+        self.__dict__ = d
+
 
 def train_fastfcn_mod(options=None, num_epochs=1, reporting_int=5, batch_size=16, MODEL_NICKNAME=None):
     '''
@@ -95,10 +97,10 @@ def train_fastfcn_mod(options=None, num_epochs=1, reporting_int=5, batch_size=16
         )
 
     # Loss Function (modified)
-    criterion = fcn_mod.SegmentationLosses(se_loss=args.se_loss, aux=args.aux,
-                                                nclass=2, 
-                                                se_weight=args.se_weight,
-                                                aux_weight=args.aux_weight)
+    criterion = fcn_mod.SegmentationLosses(
+        se_loss=args.se_loss, aux=args.aux, nclass=2,
+        se_weight=args.se_weight, aux_weight=args.aux_weight
+        )
 
     for epoch in range(num_epochs):  # loop over the dataset multiple times
 
@@ -149,3 +151,4 @@ def train_fastfcn_mod(options=None, num_epochs=1, reporting_int=5, batch_size=16
         return None
 
     save_model(model, MODEL_NICKNAME)
+    

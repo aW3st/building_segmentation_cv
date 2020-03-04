@@ -81,8 +81,10 @@ def load_model_with_weights(model_name=None):
 
 def output_to_pred_imgs(output, dim=1):
 
-    np_pred = torch.max(output, dim=dim)[1].cpu().numpy() * 255
+    np_pred = torch.max(output, dim=dim)[1].cpu().numpy()
     out_img = Image.fromarray(np_pred.squeeze().astype('uint8'))
+
+    pdb.set_trace()
 
     return out_img
 
@@ -91,72 +93,31 @@ def get_single_pred(model, img_name=None, img_path = None):
     '''
     Predict for a single image.
     '''
+
+    device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
+    model.to(device)
     
     test_img_dir = 'submission_data/test'
 
-    # Predict on a sample image.
+    # Predict on a sample image. Default to a dummy image.
     if img_path is None:
         if img_name is None:
             img_name = '0a0a36'
         img_path = os.path.join(test_img_dir, f'{img_name}/{img_name}.tif')
 
-    img = Image.open(img_path).convert("RGB")
-    img_tensor = transforms.functional.to_tensor(img).cuda()
+    img = Image.open(img_path)
+    img_tensor = transforms.functional.to_tensor(img)[:3]
+    unit_batch = img_tensor.view(-1, 3, 1024, 1024).to(device)
     
     # Predict
     with torch.no_grad():
-        output = model(img_tensor.view(-1, 3, 1024, 1024))[2]
+        output = model(unit_batch)[2]
 
-    np_pred = torch.max(output, 1)[1].numpy() * 255
+
+    pdb.set_trace()
+
+    np_pred = torch.max(output, 1)[1]
     out_img = Image.fromarray(np_pred.squeeze().astype('uint8'))
-    
-    
-    # out_img.show()
-
-    # def predict_quadrant(full_tensor, quadrant=2):
-        
-    #     if quadrant==1:
-    #         top, left = 512, 0
-    #     elif quadrant==2:
-    #         top, left = 0, 0
-    #     elif quadrant==3:
-    #         top, left = 0, 512
-    #     elif quadrant==4:
-    #         top, left = 512, 512
-
-    #     quad = transforms.functional.crop(full_img, top, left, 512, 512)
-    #     quad = quad.view(-1, 3, 512, 512) 
-
-    #     output = model(quad)[2]
-    #     np_pred = torch.max(output, 1)[1].cpu().numpy() * 255
-    #     out_img = Image.fromarray(np_pred.squeeze().astype('uint8'))
-
-    #     # pdb.set_trace()
-
-    #     return out_img
-
-
-    # merged = Image.new('RGB', (1024, 1024), (0,0,0))
-    
-    # merged.paste(
-    #     predict_quadrant(img_tensor, quadrant=1),
-    #     (512, 0)
-    # )
-
-    # merged.paste(
-    #     predict_quadrant(img_tensor, quadrant=2),
-    #     (0,0)
-    # )
-
-    # merged.paste(
-    #     predict_quadrant(img_tensor, quadrant=3),
-    #     (0, 512)
-    # )
-
-    # merged.paste(
-    #     predict_quadrant(img_tensor, quadrant=4),
-    #     (512,512)
-    # )
 
     return out_img
 
@@ -166,6 +127,7 @@ def predict_test_set(model, model_name, output_path='model_outs/'):
     Predict for the entire submission set.
     '''
 
+    model.eval()
     test_data = fcn_mod.get_dataloader(load_test=True, batch_size=4)
     device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
     model.to(device)
@@ -194,15 +156,14 @@ def predict_test_set(model, model_name, output_path='model_outs/'):
 
 if __name__ == "__main__":
 
-    MODEL_NAME = '04-03-2020__Wed__03-04__five_epoch_single_region'
+    MODEL_NAME = 'model_test'
     MODEL = load_model_with_weights(model_name=MODEL_NAME)
-    MODEL.eval()
 
-    # # Predict a single test image:
-    # IMG_NAME = '0a0a36'
-    # PRED = get_single_pred(MODEL, img_name=IMG_NAME)
-    # IMAGE_OUT_PATH = f'models/{MODEL_NAME}/predictions/{IMG_NAME}.tif'
-    # # Save test image to correct model output directory.
-    # PRED.save(IMAGE_OUT_PATH)
+    # Predict a single test image:
+    IMG_NAME = '0a0a36'
+    PRED = get_single_pred(MODEL, img_name=IMG_NAME)
+    IMAGE_OUT_PATH = f'models/{MODEL_NAME}/predictions/{IMG_NAME}.tif'
+    # Save test image to correct model output directory.
+    PRED.save(IMAGE_OUT_PATH)
 
-    predict_test_set(model=MODEL, model_name=MODEL_NAME)
+    # predict_test_set(model=MODEL, model_name=MODEL_NAME)

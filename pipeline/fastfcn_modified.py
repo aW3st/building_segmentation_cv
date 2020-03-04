@@ -24,6 +24,7 @@ import torch.nn.functional as F
 from PIL import Image
 import random
 import math
+import pdb
 
 from FastFCN import encoding
 from FastFCN.encoding import dilated as resnet
@@ -72,8 +73,8 @@ class MyDataset(Dataset):
         # print(index)
         if self.load_test:
             img_name = self.images[index]
-            image = Image.open(os.path.join(self.path, img_name, img_name + '.tif')).convert("RGB")
-            image_tensor = transforms.functional.to_tensor(image)
+            image = Image.open(os.path.join(self.path, img_name, img_name + '.tif'))
+            image_tensor = transforms.functional.to_tensor(image)[:3] * 255
             return image_tensor, img_name
         else:
             image = Image.open(os.path.join(self.path, 'images', self.images[index]))
