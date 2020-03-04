@@ -74,7 +74,7 @@ def train_fastfcn_mod(options=None, num_epochs=1, reporting_int=5, batch_size=16
             'save-folder': 'experiments/segmentation/results', # 'path to save images'
         }
 
-    options['cuda'] = torch.cuda.is_available() and not optons['no_cuda']
+    options['cuda'] = torch.cuda.is_available() and not options['no_cuda']
 
     # Convert options dict to attributed object
     args = ObjectView(options)
@@ -139,7 +139,7 @@ def train_fastfcn_mod(options=None, num_epochs=1, reporting_int=5, batch_size=16
             model_name = model_prefix
 
         model_dir = os.path.join('models', model_name)
-        if not os.path.exists(model_dir)
+        if not os.path.exists(model_dir):
             os.makedirs(model_dir)
 
         model_path = os.path.join(model_dir, f'{model_name}_m.pt')
