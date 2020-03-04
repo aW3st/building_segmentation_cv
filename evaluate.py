@@ -167,6 +167,8 @@ def predict_test_set(model, model_name, output_path='model_outs/'):
     '''
 
     test_data = fcn_mod.get_dataloader(load_test=True, batch_size=4)
+    device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
+    model.to(device)
 
     if not os.path.exists(f'models/{model_name}/predictions'):
             os.makedirs(f'models/{model_name}/predictions')
