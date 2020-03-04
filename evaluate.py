@@ -73,7 +73,7 @@ def load_model_with_weights(model_name=None):
     model = get_model(args)
 
 
-    path_to_state_dict = f'models/{model_name}/{model_name}.pt'
+    path_to_state_dict = f'models/{model_name}/{model_name}_m.pt'
     model.load_state_dict(torch.load(path_to_state_dict))
 
     return model
@@ -101,13 +101,13 @@ def get_single_pred(model, img_name=None, img_path = None):
         img_path = os.path.join(test_img_dir, f'{img_name}/{img_name}.tif')
 
     img = Image.open(img_path).convert("RGB")
-    img_tensor = transforms.functional.to_tensor(img)
+    img_tensor = transforms.functional.to_tensor(img).cuda()
     
     # Predict
     with torch.no_grad():
         output = model(img_tensor.view(-1, 3, 1024, 1024))[2]
 
-    np_pred = torch.max(output, 1)[1].cpu().numpy() * 255
+    np_pred = torch.max(output, 1)[1].numpy() * 255
     out_img = Image.fromarray(np_pred.squeeze().astype('uint8'))
     
     
@@ -173,14 +173,11 @@ def predict_test_set(model, model_name, output_path='model_outs/'):
 
     tbar = tqdm(test_data)
     for i, (image_tensors, img_names) in enumerate(tbar):
-        # pdb.set_trace()
 
         # Predict on image tensors
         with torch.no_grad():
             outputs = model(image_tensors)[2]
-            pdb.set_trace()
             predict_imgs = [output_to_pred_imgs(output, dim=0) for output in outputs]
-        pdb.set_trace()
 
         # Zip images, and save.
         for predict_img, img_name in zip(predict_imgs, img_names):
@@ -192,7 +189,7 @@ def predict_test_set(model, model_name, output_path='model_outs/'):
 
 if __name__ == "__main__":
 
-    MODEL_NAME = 'model_test'
+    MODEL_NAME = '04-03-2020__Wed__03-04__five_epoch_single_region'
     MODEL = load_model_with_weights(model_name=MODEL_NAME)
     MODEL.eval()
 
