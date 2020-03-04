@@ -2,6 +2,9 @@
 submission_data/
 tmp/
 
+# Trained Weights / Models (too large to commit)
+*.pt
+
 # ---------------------
 
 # Byte-compiled / optimized / DLL files
