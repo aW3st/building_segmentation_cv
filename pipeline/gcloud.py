@@ -1,6 +1,6 @@
 # Imports the Google Cloud client library
 
-from google import storage
+from google.cloud import storage
 
 def upload_blob(bucket_name, source_file_name, destination_blob_name=None):
     """
@@ -57,4 +57,4 @@ if __name__ == "__main__":
     # upload_blob('building-segmentation-cv', source_file_name='data/doge.jpg')
 
     print("Downloading images from Gcloud")
-    download_blob(bucket_name=, source_blob_name='DD-building-segmentation', destination_file_name='/tmp/images')
+#    download_blob(bucket_name=, source_blob_name='DD-building-segmentation', destination_file_name='/tmp/images')
