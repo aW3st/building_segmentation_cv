@@ -128,13 +128,11 @@ def train_fastfcn_mod(options=None, num_epochs=1, reporting_int=5, batch_size=16
                     (epoch + 1, i + 1, running_loss / 5))
                 running_loss = 0.0
                 
-            break
-                
         lr_scheduler.step()
 
     def save_model(model, MODEL_NICKNAME=None):
 
-        model_prefix = datetime.now().strftime("%d-%m-%Y--%a--%H-%M")
+        model_prefix = datetime.now().strftime("%d-%m-%Y__%a__%H-%M")
         if MODEL_NICKNAME is not None:
             model_name = model_prefix + "__" + MODEL_NICKNAME
         else:
