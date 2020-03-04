@@ -26,3 +26,13 @@ Thomas had reviewed the image segmentation example from Tensorflow, and learned 
 // Alex researched deployment tech ... mess
 
 // spent forever figuring out how to load the dataset into tensorflow
+
+TO DO:
+experiments:
+    - Lovasz-Softmax and Jaccard hinge loss
+    - [Scale Aware Module](https://arxiv.org/pdf/1907.03089.pdf)
+    - Semi-supervised learning
+        - [Noisy Student training](https://arxiv.org/pdf/1911.04252v2.pdf)
+    - Data Cleaning
+        - Do we exclude training data with bad labels? how do we find bad labels in the tier 1 training set?
+

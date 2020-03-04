@@ -16,6 +16,11 @@ import FastFCN.encoding.utils as utils
 from pipeline.fastfcn_modified import get_model
 from pipeline.train import ObjectView
 
+def img_frombytes(data):
+    size = data.shape[::-1]
+    databytes = np.packbits(data, axis=1)
+    return Image.frombytes(mode='1', size=size, data=databytes)
+
 def load_model_with_weights(model_name=None):
     '''
     Load a model by name from the /models subdirectory.
@@ -81,10 +86,10 @@ def load_model_with_weights(model_name=None):
 
 def output_to_pred_imgs(output, dim=1):
 
-    np_pred = torch.max(output, dim=dim)[1].cpu().numpy() * 255
-    out_img = Image.fromarray(np_pred.squeeze().astype('uint8'))
 
-    return out_img
+
+    np_pred = torch.max(output, dim=dim)[1].cpu().numpy()
+    return img_from_bytes(np_pred)
 
 
 def get_single_pred(model, img_name=None, img_path = None):
@@ -111,52 +116,6 @@ def get_single_pred(model, img_name=None, img_path = None):
     out_img = Image.fromarray(np_pred.squeeze().astype('uint8'))
     
     
-    # out_img.show()
-
-    # def predict_quadrant(full_tensor, quadrant=2):
-        
-    #     if quadrant==1:
-    #         top, left = 512, 0
-    #     elif quadrant==2:
-    #         top, left = 0, 0
-    #     elif quadrant==3:
-    #         top, left = 0, 512
-    #     elif quadrant==4:
-    #         top, left = 512, 512
-
-    #     quad = transforms.functional.crop(full_img, top, left, 512, 512)
-    #     quad = quad.view(-1, 3, 512, 512) 
-
-    #     output = model(quad)[2]
-    #     np_pred = torch.max(output, 1)[1].cpu().numpy() * 255
-    #     out_img = Image.fromarray(np_pred.squeeze().astype('uint8'))
-
-    #     # pdb.set_trace()
-
-    #     return out_img
-
-
-    # merged = Image.new('RGB', (1024, 1024), (0,0,0))
-    
-    # merged.paste(
-    #     predict_quadrant(img_tensor, quadrant=1),
-    #     (512, 0)
-    # )
-
-    # merged.paste(
-    #     predict_quadrant(img_tensor, quadrant=2),
-    #     (0,0)
-    # )
-
-    # merged.paste(
-    #     predict_quadrant(img_tensor, quadrant=3),
-    #     (0, 512)
-    # )
-
-    # merged.paste(
-    #     predict_quadrant(img_tensor, quadrant=4),
-    #     (512,512)
-    # )
 
     return out_img
 
