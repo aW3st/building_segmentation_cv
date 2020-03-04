@@ -132,28 +132,21 @@ def train_fastfcn_mod(options=None, num_epochs=1, reporting_int=5, batch_size=16
                 
         lr_scheduler.step()
 
-        torch.save(model.state_dict(), "model_outs/model.pt")
+    def save_model(model, MODEL_NICKNAME=None):
 
-def name_model():
-    '''
-    Come up with a custom name for a model based on the timestamp.
-    '''
-    raise NotImplementedError
+        model_prefix = datetime.now().strftime("%d-%m-%Y--%a--%H-%M")
+        if MODEL_NICKNAME is not None:
+            model_name = model_prefix + "__" + MODEL_NICKNAME
+        else:
+            model_name = model_prefix
 
-def save_model(model, MODEL_NICKNAME=None):
+        model_dir = os.path.join('models', model_name)
+        if not os.path.exists(model_dir)
+            os.makedirs(model_dir)
 
+        model_path = os.path.join(model_dir, f'{model_name}_m.pt')
+        torch.save(model.state_dict(), model_path)
 
-    model_prefix = datetime.now().strftime("%d-%m-%Y--%a--%H-%M")
-    if MODEL_NICKNAME is not None:
-        model_name = model_prefix + "__" + MODEL_NICKNAME
-    else:
-        model_name = model_prefix
+        return None
 
-    model_dir = os.path.join('models', model_name)
-    if not os.path.exists(model_dir)
-        os.makedirs(model_dir)
-
-    model_path = os.path.join(model_dir, f'{model_name}_m.pt')
-    torch.save(model.state_dict(), model_path)
-
-    return None
+    save_model(model)
