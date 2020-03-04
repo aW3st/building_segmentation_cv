@@ -2,7 +2,9 @@
 submission_data/
 tmp/
 
-# Trained Weights / Models (too large to commit)
+
+# Trained Weights / Models / Outputs (too large to commit)
+models/
 *.pt
 
 # ---------------------

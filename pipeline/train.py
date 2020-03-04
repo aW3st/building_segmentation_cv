@@ -9,7 +9,7 @@
 import torch
 import pipeline.fastfcn_modified as fcn_mod
 import os
-from datetime import datetime
+from datetime import datetime, timezone
 
 class ObjectView:
         '''
@@ -130,11 +130,12 @@ def train_fastfcn_mod(options=None, num_epochs=1, reporting_int=5, batch_size=16
                 
         lr_scheduler.step()
 
-    def save_model(model, MODEL_NICKNAME=None):
 
-        model_prefix = datetime.now().strftime("%d-%m-%Y__%a__%H-%M")
-        if MODEL_NICKNAME is not None:
-            model_name = model_prefix + "__" + MODEL_NICKNAME
+    def save_model(model, model_nickname=None):
+
+        model_prefix = datetime.now(tz=timezone('EST')).strftime("%d-%m-%Y_%H-%M")
+        if model_nickname is not None:
+            model_name = model_prefix + "__" + model_nickname
         else:
             model_name = model_prefix
 

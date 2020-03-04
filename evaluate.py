@@ -7,6 +7,10 @@ import os
 from torchvision import transforms
 import pdb
 
+import pipeline.fastfcn_modified as fcn_mod
+
+from tqdm import tqdm
+
 from FastFCN.encoding.models import MultiEvalModule
 import FastFCN.encoding.utils as utils
 from pipeline.fastfcn_modified import get_model
@@ -75,6 +79,14 @@ def load_model_with_weights(model_name=None):
     return model
 
 
+def output_to_pred_imgs(output, dim=1):
+
+    np_pred = torch.max(output, dim=dim)[1].cpu().numpy() * 255
+    out_img = Image.fromarray(np_pred.squeeze().astype('uint8'))
+
+    return out_img
+
+
 def get_single_pred(model, img_name=None, img_path = None):
     '''
     Predict for a single image.
@@ -89,69 +101,93 @@ def get_single_pred(model, img_name=None, img_path = None):
         img_path = os.path.join(test_img_dir, f'{img_name}/{img_name}.tif')
 
     img = Image.open(img_path).convert("RGB")
-
-
     img_tensor = transforms.functional.to_tensor(img)
-    output = model(img_tensor.view(-1, 3, 1024, 1024))[2]
+    
+    # Predict
+    with torch.no_grad():
+        output = model(img_tensor.view(-1, 3, 1024, 1024))[2]
+
     np_pred = torch.max(output, 1)[1].cpu().numpy() * 255
     out_img = Image.fromarray(np_pred.squeeze().astype('uint8'))
-    out_img.show()
     
+    
+    # out_img.show()
 
-    def predict_quadrant(full_tensor, quadrant=2):
+    # def predict_quadrant(full_tensor, quadrant=2):
         
-        if quadrant==1:
-            top, left = 512, 0
-        elif quadrant==2:
-            top, left = 0, 0
-        elif quadrant==3:
-            top, left = 0, 512
-        elif quadrant==4:
-            top, left = 512, 512
+    #     if quadrant==1:
+    #         top, left = 512, 0
+    #     elif quadrant==2:
+    #         top, left = 0, 0
+    #     elif quadrant==3:
+    #         top, left = 0, 512
+    #     elif quadrant==4:
+    #         top, left = 512, 512
 
-        quad = transforms.functional.crop(full_img, top, left, 512, 512)
-        quad = quad.view(-1, 3, 512, 512) 
+    #     quad = transforms.functional.crop(full_img, top, left, 512, 512)
+    #     quad = quad.view(-1, 3, 512, 512) 
 
-        output = model(quad)[2]
-        np_pred = torch.max(output, 1)[1].cpu().numpy() * 255
-        out_img = Image.fromarray(np_pred.squeeze().astype('uint8'))
+    #     output = model(quad)[2]
+    #     np_pred = torch.max(output, 1)[1].cpu().numpy() * 255
+    #     out_img = Image.fromarray(np_pred.squeeze().astype('uint8'))
 
-        # pdb.set_trace()
+    #     # pdb.set_trace()
 
-        return out_img
+    #     return out_img
 
 
-    merged = Image.new('RGB', (1024, 1024), (0,0,0))
+    # merged = Image.new('RGB', (1024, 1024), (0,0,0))
     
-    merged.paste(
-        predict_quadrant(img_tensor, quadrant=1),
-        (512, 0)
-    )
+    # merged.paste(
+    #     predict_quadrant(img_tensor, quadrant=1),
+    #     (512, 0)
+    # )
 
-    merged.paste(
-        predict_quadrant(img_tensor, quadrant=2),
-        (0,0)
-    )
+    # merged.paste(
+    #     predict_quadrant(img_tensor, quadrant=2),
+    #     (0,0)
+    # )
 
-    merged.paste(
-        predict_quadrant(img_tensor, quadrant=3),
-        (0, 512)
-    )
+    # merged.paste(
+    #     predict_quadrant(img_tensor, quadrant=3),
+    #     (0, 512)
+    # )
 
-    merged.paste(
-        predict_quadrant(img_tensor, quadrant=4),
-        (512,512)
-    )
+    # merged.paste(
+    #     predict_quadrant(img_tensor, quadrant=4),
+    #     (512,512)
+    # )
 
-    return merged
+    return out_img
 
 
-def predict_test_set(model, path_to_test_set, output_path='model_outs/'):
+def predict_test_set(model, model_name, output_path='model_outs/'):
     '''
     Predict for the entire submission set.
     '''
 
-    raise NotImplementedError
+    test_data = fcn_mod.get_dataloader(load_test=True, batch_size=4)
+
+    if not os.path.exists(f'models/{model_name}/predictions'):
+            os.makedirs(f'models/{model_name}/predictions')
+
+    tbar = tqdm(test_data)
+    for i, (image_tensors, img_names) in enumerate(tbar):
+        # pdb.set_trace()
+
+        # Predict on image tensors
+        with torch.no_grad():
+            outputs = model(image_tensors)[2]
+            pdb.set_trace()
+            predict_imgs = [output_to_pred_imgs(output, dim=0) for output in outputs]
+        pdb.set_trace()
+
+        # Zip images, and save.
+        for predict_img, img_name in zip(predict_imgs, img_names):
+            image_out_path = f'models/{model_name}/predictions/{img_name}.tif'
+            predict_img.save(image_out_path)
+        
+    return None
 
 
 if __name__ == "__main__":
@@ -160,11 +196,11 @@ if __name__ == "__main__":
     MODEL = load_model_with_weights(model_name=MODEL_NAME)
     MODEL.eval()
 
-    # Predict a single test image:
-    IMG_NAME = '0a0a36'
-    PRED = get_single_pred(MODEL, img_name=IMG_NAME)
-    PRED.show()
+    # # Predict a single test image:
+    # IMG_NAME = '0a0a36'
+    # PRED = get_single_pred(MODEL, img_name=IMG_NAME)
+    # IMAGE_OUT_PATH = f'models/{MODEL_NAME}/predictions/{IMG_NAME}.tif'
+    # # Save test image to correct model output directory.
+    # PRED.save(IMAGE_OUT_PATH)
 
-    IMAGE_OUT_PATH = f'models/{MODEL_NAME}/predictions/{IMG_NAME}.tif'
-    # Save test image to correct model output directory.
-    PRED.save(IMAGE_OUT_PATH)
+    predict_test_set(model=MODEL, model_name=MODEL_NAME)
