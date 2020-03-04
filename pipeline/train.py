@@ -9,6 +9,7 @@
 import torch
 import pipeline.fastfcn_modified as fcn_mod
 import os
+from datetime import datetime
 
 class ObjectView:
         '''
@@ -139,9 +140,20 @@ def name_model():
     '''
     raise NotImplementedError
 
-def save_model(model, model_dir='model_outs', MODEL_NAME=None):
+def save_model(model, MODEL_NICKNAME=None):
 
-    path = os.path.join(model_dir, f'{MODEL_NAME}.pt')
-    torch.save(model.state_dict(), path)
+
+    model_prefix = datetime.now().strftime("%d-%m-%Y--%a--%H-%M")
+    if MODEL_NICKNAME is not None:
+        model_name = model_prefix + "__" + MODEL_NICKNAME
+    else:
+        model_name = model_prefix
+
+    model_dir = os.path.join('models', model_name)
+    if not os.path.exists(model_dir)
+        os.makedirs(model_dir)
+
+    model_path = os.path.join(model_dir, f'{model_name}_m.pt')
+    torch.save(model.state_dict(), model_path)
 
     return None
