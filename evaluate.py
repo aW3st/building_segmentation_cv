@@ -79,6 +79,8 @@ def load_model_with_weights(model_name=None):
     args = ObjectView(options)
     model = get_model(args)
 
+    if model_name[-5:] == '_m.pt'
+        model_name = [:-5]
 
     path_to_state_dict = f'models/{model_name}/{model_name}_m.pt'
     model.load_state_dict(torch.load(path_to_state_dict))
@@ -117,7 +119,7 @@ def get_single_pred(model, img_name=None, img_path = None):
     return out_img
 
 
-def predict_test_set(model, model_name, output_path='model_outs/'):
+def predict_test_set(model, model_name):
     '''
     Predict for the entire submission set.
     '''
@@ -147,18 +149,37 @@ def predict_test_set(model, model_name, output_path='model_outs/'):
         
     return None
 
+if __name__=='__main__':
 
-if __name__ == "__main__":
+    parser = argparse.ArgumentParser(
+        description=__doc__,
+        formatter_class=argparse.RawDescriptionHelpFormatter
+    )
+    subparsers = parser.add_subparsers(dest='command')
 
-    MODEL_NAME = '04-03-2020__Wed__03-04__five_epoch_single_region'
-    MODEL = load_model_with_weights(model_name=MODEL_NAME)
-    MODEL.eval()
+    train_parser = subparsers.add_parser('test', help=train_fastfcn_mod.__doc__)
+    train_parser.add_argument(
+        '-name', default=None, type=str, required=False,
+        help='Name of model weights file in models directory')
+    train_parser.add_argument(
+        '-img_dir', default='submissiondata/test', type=str, required=False,
+        help='Directory of images to predict.')
+    train_parser.add_argument(
+        '-overwrite', default=False, type=bool, required=False,
+        help='If True, write over existing images. \
+            Default behavior checks whether images exist in prediction directory.')
 
-    # # Predict a single test image:
-    # IMG_NAME = '0a0a36'
-    # PRED = get_single_pred(MODEL, img_name=IMG_NAME)
-    # IMAGE_OUT_PATH = f'models/{MODEL_NAME}/predictions/{IMG_NAME}.tif'
-    # # Save test image to correct model output directory.
-    # PRED.save(IMAGE_OUT_PATH)
+    args = parser.parse_args()
 
-    predict_test_set(model=MODEL, model_name=MODEL_NAME)
+    if args.command == 'test':
+        MODEL = load_model_with_weights(model_name=MODEL_NAME)
+        MODEL.eval()
+        predict_test_set(model=MODEL, model_name=MODEL_NAME)
+
+    else:
+        MODEL_NAME = '04-03-2020__Wed__03-04__five_epoch_single_region'
+        MODEL = load_model_with_weights(model_name=MODEL_NAME)
+        MODEL.eval()
+        predict_test_set(model=MODEL, model_name=MODEL_NAME)
+
+    

@@ -58,7 +58,7 @@ class MyDataset(Dataset):
     '''
     Custom PyTorch Dataset class.
     '''
-    def __init__(self, path='tmp', transforms=None, load_test=False, split=None):
+    def __init__(self, path='tmp', transforms=None, load_test=False, split=None, batch_trim=False):
 
         self.transforms = transforms
         self.load_test = load_test
@@ -79,6 +79,13 @@ class MyDataset(Dataset):
             # self.images = [fn for fn in self.images if fn.endswith('.jpg')]
             # self.masks = [fn for fn in self.masks if fn.endswith('.jpg')]
             self.coordinates = None
+        
+        # Option to dataset for speedy development training to subset of batches
+        if batch_trim:
+            if batch_trim * 16 > len(self.images):
+                pass
+            else:
+                self.images, self.masks = self.images[:int(trim)*16], self.masks[:int(trim)*16]
 
     def __getitem__(self, index):
         # print(index)
@@ -100,7 +107,7 @@ class MyDataset(Dataset):
 
 # ---- Load Dataset ----
 
-def get_dataloader(path=None, load_test=False, batch_size=16):
+def get_dataloader(path=None, load_test=False, batch_size=16, batch_trim=False):
     '''
     Load pytorch batch data loader only
     '''
@@ -108,7 +115,7 @@ def get_dataloader(path=None, load_test=False, batch_size=16):
         path = 'tmp'
     print('Load test:', load_test)
     batch_loader = DataLoader(
-        MyDataset(path, transforms=mytransform, load_test=load_test),
+        MyDataset(path, transforms=mytransform, load_test=load_test, batch_trim=False),
         shuffle=True, batch_size=batch_size
         )
     print('Dataset Loaded:')

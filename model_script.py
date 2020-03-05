@@ -31,12 +31,16 @@ if __name__=='__main__':
     train_parser.add_argument(
         '-train_path', default=None, type=str, required=False,
         help='Folder containing training images, with images and masks subdirectory.')
+    train_parser.add_argument(
+        '-batch_trim', default=None, type=int, required=False,
+        help='Option to only train for a limit number of batches in each epoch.')
 
     args = parser.parse_args()
+    print('Args:\n', args)
 
     if args.command == 'train':
         train_fastfcn_mod(
             num_epochs=args.epochs, reporting_int=args.report,
             batch_size=args.batch_size, MODEL_NICKNAME=args.name,
-            train_path=args.train_path
+            train_path=args.train_path, batch_trim=args.batch_trim
             )

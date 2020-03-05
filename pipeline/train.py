@@ -10,6 +10,7 @@ import torch
 import pipeline.fastfcn_modified as fcn_mod
 import os
 from datetime import datetime, timezone
+import numpy as np
 
 
 class ObjectView:
@@ -20,11 +21,76 @@ class ObjectView:
     '''
     def __init__(self, d):
         self.__dict__ = d
+    
+
+def save_model(model, model_nickname=None):
+    '''
+    Save a model to the correct dictionary
+    '''
+
+    model_prefix = datetime.now(tz=timezone(-datetime.timedelta(hours=5))).strftime("%d-%m-%Y_%H-%M")
+    if model_nickname is not None:
+        model_name = model_prefix + "__" + model_nickname
+    else:
+        model_name = model_prefix
+
+    model_dir = os.path.join('models', model_name)
+    if not os.path.exists(model_dir):
+        os.makedirs(model_dir)
+
+    model_path = os.path.join(model_dir, '{}_m.pt'.format(model_name))
+    torch.save(model.state_dict(), model_path)
+
+    return None
+
+class EarlyStopping:
+    """Early stops the training if validation loss doesn't improve after a given patience."""
+    def __init__(self, patience=7, verbose=False, delta=0):
+        """
+        Args:
+            patience (int): How long to wait after last time validation loss improved.
+                            Default: 7
+            verbose (bool): If True, prints a message for each validation loss improvement. 
+                            Default: False
+            delta (float): Minimum change in the monitored quantity to qualify as an improvement.
+                            Default: 0
+        """
+        self.patience = patience
+        self.verbose = verbose
+        self.counter = 0
+        self.best_score = None
+        self.early_stop = False
+        self.val_loss_min = np.Inf
+        self.delta = delta
+
+    def __call__(self, val_loss, model, model_nickname):
+
+        score = -val_loss
+
+        if self.best_score is None:
+            self.best_score = score
+            self.save_checkpoint(val_loss, model)
+        elif score < self.best_score + self.delta:
+            self.counter += 1
+            print(f'EarlyStopping counter: {self.counter} out of {self.patience}')
+            if self.counter >= self.patience:
+                self.early_stop = True
+        else:
+            self.best_score = score
+            self.save_checkpoint(val_loss, model, model_nickname)
+            self.counter = 0
+
+    def save_checkpoint(self, val_loss, model, model_nickname):
+        '''Saves model when validation loss decrease.'''
+        if self.verbose:
+            print(f'Validation loss decreased ({self.val_loss_min:.6f} --> {val_loss:.6f}).  Saving model ...')
+        save_model(model, model_nickname=model_nickname + '_chkpt')
+        self.val_loss_min = val_loss
 
 
 def train_fastfcn_mod(
     options=None, num_epochs=1, reporting_int=5, batch_size=16,
-    MODEL_NICKNAME=None, train_path=None
+    MODEL_NICKNAME=None, train_path=None, batch_trim=None
     ):
     '''
     Compile and train the modified FastFCN implementation.
@@ -83,7 +149,7 @@ def train_fastfcn_mod(
     # Convert options dict to attributed object
     args = ObjectView(options)
     
-    train_dataloader = fcn_mod.get_dataloader(path=train_path, load_test=False, batch_size=batch_size)
+    train_dataloader = fcn_mod.get_dataloader(path=train_path, load_test=False, batch_size=batch_size, batch_trim=batch_trim)
     device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
     # Compile modified FastFCN model.
     model = fcn_mod.get_model(args)
@@ -103,6 +169,8 @@ def train_fastfcn_mod(
         se_loss=args.se_loss, aux=args.aux, nclass=2,
         se_weight=args.se_weight, aux_weight=args.aux_weight
         )
+
+    early_stopper = EarlyStopping(patience=7, verbose=True)
 
     for epoch in range(num_epochs):  # loop over the dataset multiple times
 
@@ -131,26 +199,16 @@ def train_fastfcn_mod(
                 print('[%d, %5d] loss: %.3f' %
                     (epoch + 1, i + 1, running_loss / 5))
                 running_loss = 0.0
-                
+            
+        # --- end of data iteration -------
+
+        # Check for early stopping conditions:
+        early_stopper(model, model_nickname)
+
         lr_scheduler.step()
 
+        # --- end of epoch -------
 
-    def save_model(model, model_nickname=None):
+    save_model(model, model_nickname)
 
-        model_prefix = datetime.now(tz=timezone(-datetime.timedelta(hours=5))).strftime("%d-%m-%Y_%H-%M")
-        if model_nickname is not None:
-            model_name = model_prefix + "__" + model_nickname
-        else:
-            model_name = model_prefix
-
-        model_dir = os.path.join('models', model_name)
-        if not os.path.exists(model_dir):
-            os.makedirs(model_dir)
-
-        model_path = os.path.join(model_dir, '{}_m.pt'.format(model_name))
-        torch.save(model.state_dict(), model_path)
-
-        return None
-
-    save_model(model, MODEL_NICKNAME)
-    
+    return None
