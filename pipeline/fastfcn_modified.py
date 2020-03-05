@@ -69,8 +69,8 @@ class MyDataset(Dataset):
             self.images = os.listdir(self.path)
         else:
             self.path = path
-            self.images = glob.glob(os.path.join(path, 'images','*.jpg'))
-            self.masks = glob.glob(os.path.join(path, 'masks','*.jpg'))
+            self.images = os.listdir(os.path.join(path, 'images','*.jpg'))
+            self.masks = os.listdir(os.path.join(path, 'masks','*.jpg'))
 
             if split is not None:
                 self.images, self.masks = split_regions(self.images, self.masks, split=split)
