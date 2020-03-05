@@ -115,7 +115,7 @@ def get_dataloader(path=None, load_test=False, batch_size=16, batch_trim=False):
         path = 'tmp'
     print('Load test:', load_test)
     batch_loader = DataLoader(
-        MyDataset(path, transforms=mytransform, load_test=load_test, batch_trim=False),
+        MyDataset(path, transforms=mytransform, load_test=load_test, batch_trim=batch_trim),
         shuffle=True, batch_size=batch_size
         )
     print('Dataset Loaded:')
