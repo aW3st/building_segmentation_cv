@@ -7,6 +7,8 @@
 # import pandas as pd
 import numpy as np
 
+import glob
+
 # import pdb
 
 # from tqdm import tqdm
@@ -20,6 +22,8 @@ from torch import nn # optim
 # from torch.optim import lr_scheduler
 from torch.nn import Module, Sequential, Conv2d, ReLU, AdaptiveAvgPool2d, BCELoss, CrossEntropyLoss
 import torch.nn.functional as F
+
+from pipeline.train_test_split import split_regions
 
 from PIL import Image
 import random
@@ -46,13 +50,15 @@ def mytransform(image, mask):
     mask = transforms.functional.to_tensor(mask)
     return image, mask
 
-    # ---- Dataset Class ----
+
+# ---- Dataset Class ----
+
 
 class MyDataset(Dataset):
     '''
     Custom PyTorch Dataset class.
     '''
-    def __init__(self, path='tmp', transforms=None, load_test=False):
+    def __init__(self, path='tmp', transforms=None, load_test=False, split=None):
 
         self.transforms = transforms
         self.load_test = load_test
@@ -63,10 +69,15 @@ class MyDataset(Dataset):
             self.images = os.listdir(self.path)
         else:
             self.path = path
-            self.images = os.listdir(os.path.join(path, 'images'))
-            self.masks = os.listdir(os.path.join(path, 'masks'))
-            self.images = [fn for fn in self.images if fn.endswith('.jpg')]
-            self.masks = [fn for fn in self.masks if fn.endswith('.jpg')]
+            self.images = glob.glob(os.path.join(path, 'images','*.jpg'))
+            self.masks = glob.glob(os.path.join(path, 'masks','*.jpg'))
+
+            if split is not None:
+                self.images, self.masks = split_regions(self.images, self.masks, split=split)
+                pdb.set_trace()
+
+            # self.images = [fn for fn in self.images if fn.endswith('.jpg')]
+            # self.masks = [fn for fn in self.masks if fn.endswith('.jpg')]
             self.coordinates = None
 
     def __getitem__(self, index):
@@ -108,23 +119,6 @@ def get_dataloader(path=None, load_test=False, batch_size=16):
     # print('Single Mask Shape –', sample_batch[0][1].shape)
     
     return batch_loader
-
-
-def get_dataset_and_loader(path='tmp'):
-    '''
-    Load pytorch dataset and batch data loader
-    '''
-    dataset = MyDataset(path, transforms=mytransform)
-    batch_loader = DataLoader(dataset, shuffle=True, batch_size=4)
-    print('Dataset Loaded:')
-
-    sample = dataset[0]
-    print('Single Image Shape -', sample[0].shape)
-    print('Single Mask Shape –', sample[1].shape)
-    sample_batch = next(iter(batch_loader))
-    print('Batch Shape -', sample_batch[0].shape)
-
-    return dataset, batch_loader
 
 # ------------------------------------------
 # ------------------------------------------

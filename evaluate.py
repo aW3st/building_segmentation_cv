@@ -16,6 +16,8 @@ import FastFCN.encoding.utils as utils
 from pipeline.fastfcn_modified import get_model
 from pipeline.train import ObjectView
 
+import argparse
+
 def img_frombytes(data):
     size = data.shape[::-1]
     databytes = np.packbits(data, axis=1)

@@ -22,7 +22,10 @@ class ObjectView:
         self.__dict__ = d
 
 
-def train_fastfcn_mod(options=None, num_epochs=1, reporting_int=5, batch_size=16, MODEL_NICKNAME=None):
+def train_fastfcn_mod(
+    options=None, num_epochs=1, reporting_int=5, batch_size=16,
+    MODEL_NICKNAME=None, train_path=None
+    ):
     '''
     Compile and train the modified FastFCN implementation.
     '''
@@ -73,7 +76,6 @@ def train_fastfcn_mod(options=None, num_epochs=1, reporting_int=5, batch_size=16
             'mode': 'testval',
             'ms': False, # 'multi scale & flip'
             'no_val': False, # 'skip validation during training'
-            'save-folder': 'experiments/segmentation/results', # 'path to save images'
         }
 
     options['cuda'] = torch.cuda.is_available() and not options['no_cuda']
@@ -81,7 +83,7 @@ def train_fastfcn_mod(options=None, num_epochs=1, reporting_int=5, batch_size=16
     # Convert options dict to attributed object
     args = ObjectView(options)
     
-    train_dataloader = fcn_mod.get_dataloader()
+    train_dataloader = fcn_mod.get_dataloader(path=train_path, load_test=False, batch_size=batch_size)
     device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
     # Compile modified FastFCN model.
     model = fcn_mod.get_model(args)

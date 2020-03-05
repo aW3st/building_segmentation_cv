@@ -1,21 +1,42 @@
 from pipeline.train import train_fastfcn_mod
 
-# -----------------------------------------
-# -------------- Main ---------------------
-# -----------------------------------------
+import argparse
 
-# Use this to quickly test functions.
+import os.path
+
+import sys
+
 
 if __name__=='__main__':
-    
-    train_fastfcn_mod(
-        num_epochs=5, reporting_int=5,
-        batch_size=16, MODEL_NICKNAME='five_epoch_single_region',
-        data_path=None
-        )
 
-# # Predict
-# with torch.no_grad():
-#     output = model(img_tensor.view(-1, 3, 1024, 1024))[2]
-# np_pred = torch.max(output, 1)[1].cpu().numpy() * 255
-# out_img = Image.fromarray(np_pred.squeeze().astype('uint8'))
+    parser = argparse.ArgumentParser(
+        description=__doc__,
+        formatter_class=argparse.RawDescriptionHelpFormatter
+    )
+    subparsers = parser.add_subparsers(dest='command')
+
+    train_parser = subparsers.add_parser('train', help=train_fastfcn_mod.__doc__)
+    train_parser.add_argument(
+        '-name', default=None, type=str, required=False,
+        help='Nickname for model.')
+    train_parser.add_argument(
+        '-epochs', default=2, type=int, required=False,
+        help='Number of epochs.')
+    train_parser.add_argument(
+        '-report', default=5, type=int, required=False,
+        help='Number of batches between loss reports (int).')
+    train_parser.add_argument(
+        '-batch_size', default=16, type=int, required=False,
+        help='The filter used to match logs.')
+    train_parser.add_argument(
+        '-train_path', default=None, type=str, required=False,
+        help='Folder containing training images, with images and masks subdirectory.')
+
+    args = parser.parse_args()
+
+    if args.command == 'train':
+        train_fastfcn_mod(
+            num_epochs=args.epochs, reporting_int=args.report,
+            batch_size=args.batch_size, MODEL_NICKNAME=args.name,
+            train_path=args.train_path
+            )
