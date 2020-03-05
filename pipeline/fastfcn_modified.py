@@ -88,7 +88,7 @@ class MyDataset(Dataset):
             image_tensor = transforms.functional.to_tensor(image)[:3]
             return image_tensor, img_name
         else:
-            image = Image.open(self.images[index]))
+            image = Image.open(self.images[index])
             mask = Image.open(self.masks[index]))
         if self.transforms is not None:
             image, mask = self.transforms(image, mask)
