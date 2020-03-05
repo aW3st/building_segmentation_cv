@@ -89,7 +89,7 @@ class MyDataset(Dataset):
             return image_tensor, img_name
         else:
             image = Image.open(self.images[index])
-            mask = Image.open(self.masks[index]))
+            mask = Image.open(self.masks[index])
         if self.transforms is not None:
             image, mask = self.transforms(image, mask)
         return (image, mask)
