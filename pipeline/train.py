@@ -90,7 +90,7 @@ class EarlyStopping:
 
 def train_fastfcn_mod(
     options=None, num_epochs=1, reporting_int=5, batch_size=16,
-    MODEL_NICKNAME=None, train_path=None, batch_trim=None
+    model_nickname=None, train_path=None, batch_trim=None
     ):
     '''
     Compile and train the modified FastFCN implementation.
