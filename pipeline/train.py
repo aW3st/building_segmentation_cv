@@ -203,7 +203,7 @@ def train_fastfcn_mod(
         # --- end of data iteration -------
 
         # Check for early stopping conditions:
-        early_stopper(model, model_nickname)
+        # early_stopper(running_loss, model, model_nickname)
 
         lr_scheduler.step()
 
