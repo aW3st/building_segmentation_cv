@@ -85,7 +85,7 @@ class MyDataset(Dataset):
             if batch_trim * 16 > len(self.images):
                 pass
             else:
-                self.images, self.masks = self.images[:int(trim)*16], self.masks[:int(trim)*16]
+                self.images, self.masks = self.images[:int(batch_trim)*16], self.masks[:int(batch_trim)*16]
 
     def __getitem__(self, index):
         # print(index)
