@@ -18,7 +18,12 @@ __pycache__/
 *.so
 
 # Distribution / packaging
+<<<<<<< HEAD
 *.code-workspace
+=======
+*.swp
+.code-workspace
+>>>>>>> eacf43d269d65b115647019683c8696ee0412db7
 .vscode
 .Python
 build/
