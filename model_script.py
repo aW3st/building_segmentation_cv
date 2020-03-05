@@ -43,4 +43,4 @@ if __name__=='__main__':
             num_epochs=args.epochs, reporting_int=args.report,
             batch_size=args.batch_size, model_nickname=args.name,
             train_path=args.train_path, batch_trim=args.batch_trim
-            )p
+            )
