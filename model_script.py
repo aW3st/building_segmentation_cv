@@ -41,6 +41,6 @@ if __name__=='__main__':
     if args.command == 'train':
         train_fastfcn_mod(
             num_epochs=args.epochs, reporting_int=args.report,
-            batch_size=args.batch_size, MODEL_NICKNAME=args.name,
+            batch_size=args.batch_size, model_nickname=args.name,
             train_path=args.train_path, batch_trim=args.batch_trim
-            )
+            )p
