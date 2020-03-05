@@ -69,8 +69,8 @@ class MyDataset(Dataset):
             self.images = os.listdir(self.path)
         else:
             self.path = path
-            self.images = os.listdir(os.path.join(path, 'images','*.jpg'))
-            self.masks = os.listdir(os.path.join(path, 'masks','*.jpg'))
+            self.images = glob.glob(os.path.join(path, 'images','*.jpg'))
+            self.masks = glob.glob(os.path.join(path, 'masks','*.jpg'))
 
             if split is not None:
                 self.images, self.masks = split_regions(self.images, self.masks, split=split)
@@ -88,8 +88,8 @@ class MyDataset(Dataset):
             image_tensor = transforms.functional.to_tensor(image)[:3]
             return image_tensor, img_name
         else:
-            image = Image.open(os.path.join(self.path, 'images', self.images[index]))
-            mask = Image.open(os.path.join(self.path, 'masks', self.masks[index]))
+            image = Image.open(self.images[index]))
+            mask = Image.open(self.masks[index]))
         if self.transforms is not None:
             image, mask = self.transforms(image, mask)
         return (image, mask)
