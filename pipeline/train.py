@@ -137,7 +137,7 @@ def train_fastfcn_mod(
 
     def save_model(model, model_nickname=None):
 
-        model_prefix = datetime.now(tz=timezone('EST')).strftime("%d-%m-%Y_%H-%M")
+        model_prefix = datetime.now(tz=timezone(-datetime.timedelta(hours=5))).strftime("%d-%m-%Y_%H-%M")
         if model_nickname is not None:
             model_name = model_prefix + "__" + model_nickname
         else:
@@ -147,7 +147,7 @@ def train_fastfcn_mod(
         if not os.path.exists(model_dir):
             os.makedirs(model_dir)
 
-        model_path = os.path.join(model_dir, f'{model_name}_m.pt')
+        model_path = os.path.join(model_dir, '{}_m.pt'.format(model_name))
         torch.save(model.state_dict(), model_path)
 
         return None
