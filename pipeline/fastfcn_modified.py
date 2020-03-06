@@ -58,7 +58,7 @@ class MyDataset(Dataset):
     '''
     Custom PyTorch Dataset class.
     '''
-    def __init__(self, path='tmp', transforms=None, load_test=False, split=None, batch_trim=False):
+    def __init__(self, in_dir='tmp', transforms=None, load_test=False, split=None, batch_trim=False):
 
         self.transforms = transforms
         self.load_test = load_test
@@ -68,9 +68,9 @@ class MyDataset(Dataset):
             self.path = 'submission_data/test'
             self.images = glob.glob(os.path.join(self.path, '*.tif'))
         else:
-            self.path = path
-            self.images = glob.glob(os.path.join(path, 'images','*.jpg'))
-            self.masks = glob.glob(os.path.join(path, 'masks','*.jpg'))
+            self.path = in_dir
+            self.images = glob.glob(os.path.join(self.path, 'images','*.jpg'))
+            self.masks = glob.glob(os.path.join(self.path, 'masks','*.jpg'))
 
             if split is not None:
                 self.images, self.masks = split_regions(self.images, self.masks, split=split)
@@ -97,9 +97,10 @@ class MyDataset(Dataset):
         else:
             image = Image.open(self.images[index])
             mask = Image.open(self.masks[index])
+            img_name = self.images[index]
         if self.transforms is not None:
             image, mask = self.transforms(image, mask)
-        return (image, mask)
+        return (image, mask, img_name)
 
     def __len__(self):
         return len(self.images)
@@ -107,12 +108,10 @@ class MyDataset(Dataset):
 
 # ---- Load Dataset ----
 
-def get_dataloader(path=None, load_test=False, batch_size=16, batch_trim=False, overwrite=False, out_dir=None):
+def get_dataloader(in_dir=None, load_test=False, batch_size=16, batch_trim=False, overwrite=False, out_dir=None):
     '''
     Load pytorch batch data loader only
     '''
-    if path is None:
-        path = 'tmp'
 
     def filter_written(name):
         img_path = f'{out_dir}/{name}.tif'
@@ -122,7 +121,7 @@ def get_dataloader(path=None, load_test=False, batch_size=16, batch_trim=False, 
             return True
     
     print('Load test:', load_test)
-    dataset = MyDataset(path, transforms=mytransform, load_test=load_test, batch_trim=batch_trim)
+    dataset = MyDataset(in_dir=in_dir, transforms=mytransform, load_test=load_test, batch_trim=batch_trim)
 
     # Check if images have been written.
     if overwrite:

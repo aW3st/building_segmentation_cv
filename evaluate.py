@@ -136,24 +136,9 @@ def predict_test_set(model, model_name, overwrite=False):
     device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
     model.to(device)
 
-    
-    
-
     print('Beginning Prediction Loop')
     tbar = tqdm(test_dataloader)
-    for i, (image_tensors, img_names) in enumerate(tbar):
-        
-        batch_done = True
-        
-        path = None
-        for name in img_names:
-            path = f'models/{model_name}/predictions/{name}.tif'
-            if os.path.exists(path) == False:
-                batch_done = False
-
-        if batch_done:
-            continue
-                
+    for i, (image_tensors, img_names) in enumerate(tbar):        
 
         # Load tensors to GPU
         image_tensors = image_tensors.to(device)
@@ -166,6 +151,47 @@ def predict_test_set(model, model_name, overwrite=False):
         # Zip images, and save.
         for predict_img, img_name in zip(predict_imgs, img_names):
             image_out_path = f'models/{model_name}/predictions/{img_name}.tif'
+            predict_img.save(image_out_path, compression="tiff_deflate")
+
+    return None
+
+def predict_custom(model, model_name, input_dir, overwrite=False):
+    '''
+    Predict for the entire submission set.
+    '''
+
+    out_dir = f'models/{model_name}/predictions/sample'
+    if not os.path.exists(out_dir):
+        os.makedirs(out_dir)
+
+    test_dataloader = fcn_mod.get_dataloader(
+        path=input_dir, batch_size=8,
+        overwrite=overwrite, out_dir=out_dir
+        )
+
+    if not test_dataloader:
+        print('Exiting...')
+        sys.exit()
+    
+    device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
+    model.to(device)
+
+    print('Beginning Prediction Loop')
+    tbar = tqdm(test_dataloader)
+    for i, (images, targets, img_names) in enumerate(tbar):
+    
+        # Load tensors to GPU
+        images = images.to(device)
+        targets = targets.to(device).squeeze(1).round().long()
+
+        # Predict on image tensors
+        with torch.no_grad():
+            outputs = model(images)[2]
+            predict_imgs = [output_to_pred_imgs(output) for output in outputs]
+
+        # Zip images, and save.
+        for predict_img, img_name in zip(predict_imgs, img_names):
+            image_out_path = f'{out_dir}/{img_name}.tif'
             predict_img.save(image_out_path, compression="tiff_deflate")
 
     return None
@@ -194,7 +220,10 @@ if __name__=='__main__':
     test_parser.add_argument(
         '-overwrite', default=False, type=bool, required=False,
         help='If True, write over existing images. \
-                Default behavior checks whether images exist in prediction directory.')
+                Default behavior checks whether images \
+                exist in prediction directory.')
+
+    test_parser = subparsers.add_parser('test', help=predict_test_set.__doc__)
 
     args = parser.parse_args()
 

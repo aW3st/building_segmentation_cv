@@ -176,19 +176,19 @@ def train_fastfcn_mod(
 
         running_loss = 0.0
 
-        for i, (image, target) in enumerate(train_dataloader, 0):
-            image = image.to(device)
-            target = target.to(device).squeeze(1).round().long()
+        for i, (images, targets) in enumerate(train_dataloader, 0):
+            images = images.to(device)
+            targets = targets.to(device).squeeze(1).round().long()
 
             # get the inputs; data is a list of [inputs, labels]
-            target.requires_grad=False
+            targets.requires_grad=False
             
             # zero the parameter gradients
             optimizer.zero_grad()
 
             # forward + backward + optimize
-            outputs = model(image)
-            loss = criterion(*outputs, target)
+            outputs = model(images)
+            loss = criterion(*outputs, targets)
             loss.backward()
             optimizer.step()
 
