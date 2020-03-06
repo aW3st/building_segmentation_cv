@@ -155,17 +155,17 @@ def predict_test_set(model, model_name, overwrite=False):
 
     return None
 
-def predict_custom(model, model_name, input_dir, overwrite=False):
+def predict_custom(model, model_name, in_dir, overwrite=False):
     '''
     Predict for the entire submission set.
     '''
 
-    out_dir = f'models/{model_name}/predictions/sample'
-    if not os.path.exists(out_dir):
-        os.makedirs(out_dir)
+    out_dir = f'models/{model_name}/predictions'
+    if not os.path.exists(out_dir+in_dir):
+        os.makedirs(out_dir+in_dir)
 
     test_dataloader = fcn_mod.get_dataloader(
-        path=input_dir, batch_size=8,
+        in_dir=in_dir, batch_size=8,
         overwrite=overwrite, out_dir=out_dir
         )
 
@@ -191,8 +191,8 @@ def predict_custom(model, model_name, input_dir, overwrite=False):
 
         # Zip images, and save.
         for predict_img, img_name in zip(predict_imgs, img_names):
-            image_out_path = f'{out_dir}/{img_name}.tif'
-            predict_img.save(image_out_path, compression="tiff_deflate")
+            image_out_path = f'{out_dir}/{img_name}'
+            predict_img.save(image_out_path)
 
     return None
 
@@ -223,14 +223,26 @@ if __name__=='__main__':
                 Default behavior checks whether images \
                 exist in prediction directory.')
 
-    test_parser = subparsers.add_parser('test', help=predict_test_set.__doc__)
-
+    custom_parser = subparsers.add_parser('custom', help=predict_custom.__doc__)
+    custom_parser.add_argument(
+            '-in_dir', default=None, type=str, required=True,
+            help='Directory of image to predict on'
+            )
+    custom_parser.add_argument(
+            '-model_name', default=None, type=str, required=True,
+            help='Name of model weights file in models directory')
+    
     args = parser.parse_args()
 
     if args.command == 'test':
         MODEL = load_model_with_weights(model_name=args.model_name)
         MODEL.eval()
         predict_test_set(model=MODEL, model_name=args.model_name)
+    
+    elif args.command =='custom':
+        MODEL = load_model_with_weights(model_name=args.model_name)
+        MODEL.eval()
+        predict_custom(model=MODEL, model_name=args.model_name, in_dir=args.in_dir)
 
     else:
         MODEL_NAME = '04-03-2020__Wed__03-04__five_epoch_single_region'
