@@ -2,7 +2,7 @@ import torch
 from torch.nn.functional import softmax
 from PIL import Image
 import numpy as np
-import os
+import sys,os
 
 from torchvision import transforms
 import pdb
@@ -129,6 +129,10 @@ def predict_test_set(model, model_name, overwrite=False):
         os.makedirs(out_dir)
 
     test_dataloader = fcn_mod.get_dataloader(load_test=True, batch_size=8, overwrite=overwrite, out_dir=out_dir)
+    if test_dataloader == False:
+        print('Exiting...')
+        sys.exit()
+    
     device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
     model.to(device)
 

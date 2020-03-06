@@ -66,7 +66,7 @@ class MyDataset(Dataset):
         if self.load_test:
             print('Loading Test')
             self.path = 'submission_data/test'
-            self.images = glob.glob(self.path, '*.tif')
+            self.images = glob.glob(os.path.join(self.path, '*.tif'))
         else:
             self.path = path
             self.images = glob.glob(os.path.join(path, 'images','*.jpg'))
@@ -128,11 +128,14 @@ def get_dataloader(path=None, load_test=False, batch_size=16, batch_trim=False, 
     if overwrite:
         # Don't filter 
         pass
-    else
+    else:
         # Filter images.
         print('Filtering images already written.')
-        dataset.images = list(filter(filter_written, self.images))
-        
+        dataset.images = list(filter(filter_written, dataset.images))
+        if len(dataset.images)==0:
+            print('All images already predicted')
+            return False
+
     print('Dataset Loaded.')
 
     batch_loader = DataLoader(
