@@ -136,10 +136,13 @@ def predict_test_set(model, model_name):
         
         
         batch_done = True
-        for i, name in enumerate(img_names):
-            if ~os.path.exists(f'models/{model_name}/predictions/{name}.tif'):
-                batch_done = False
         
+        path = None
+        for name in img_names:
+            path = f'models/{model_name}/predictions/{name}.tif'
+            if os.path.exists(path) == False:
+                batch_done = False
+
         if batch_done == True:
             continue
                 
