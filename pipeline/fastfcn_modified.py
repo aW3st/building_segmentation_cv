@@ -70,7 +70,15 @@ class MyDataset(Dataset):
         else:
             self.path = in_dir
             self.images = glob.glob(os.path.join(self.path, 'images','*.jpg'))
-            self.masks = glob.glob(os.path.join(self.path, 'masks','*.jpg'))
+            self.basenames = [os.path.basename(g) for g in self.images]
+            self.images = []
+            self.masks = []
+            for basename in self.basenames:
+                img = os.path.join(self.path, 'images', basename)
+                mask = os.path.join(self.path, 'masks', basename.replace('_i.jpg','_mask.jpg'))
+                if (os.path.exists(img) and os.path.exists(mask)):
+                    self.images.append(img)
+                    self.masks.append(mask)
 
             if split is not None:
                 self.images, self.masks = split_regions(self.images, self.masks, split=split)
