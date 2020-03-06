@@ -119,21 +119,25 @@ def get_single_pred(model, img_name=None, img_path = None):
     return out_img
 
 
-def predict_test_set(model, model_name):
+def predict_test_set(model, model_name, overwrite=False):
     '''
     Predict for the entire submission set.
     '''
 
-    test_data = fcn_mod.get_dataloader(load_test=True, batch_size=8)
+    out_dir = f'models/{model_name}/predictions'
+    if not os.path.exists(out_dir):
+        os.makedirs(out_dir)
+
+    test_dataloader = fcn_mod.get_dataloader(load_test=True, batch_size=8, overwrite=overwrite, out_dir=out_dir)
     device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
     model.to(device)
 
-    if not os.path.exists(f'models/{model_name}/predictions'):
-            os.makedirs(f'models/{model_name}/predictions')
+    
+    
 
     print('Beginning Prediction Loop')
-    for i, (image_tensors, img_names) in tqdm(enumerate(test_data)):
-        
+    tbar = tqdm(test_dataloader)
+    for i, (image_tensors, img_names) in enumerate(tbar):
         
         batch_done = True
         
@@ -143,7 +147,7 @@ def predict_test_set(model, model_name):
             if os.path.exists(path) == False:
                 batch_done = False
 
-        if batch_done == True:
+        if batch_done:
             continue
                 
 
@@ -158,7 +162,7 @@ def predict_test_set(model, model_name):
         # Zip images, and save.
         for predict_img, img_name in zip(predict_imgs, img_names):
             image_out_path = f'models/{model_name}/predictions/{img_name}.tif'
-            predict_img.save(image_out_path)
+            predict_img.save(image_out_path, compression="tiff_deflate")
 
     return None
 

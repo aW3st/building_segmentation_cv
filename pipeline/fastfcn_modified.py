@@ -66,7 +66,7 @@ class MyDataset(Dataset):
         if self.load_test:
             print('Loading Test')
             self.path = 'submission_data/test'
-            self.images = os.listdir(self.path)
+            self.images = glob.glob(self.path, '*.tif')
         else:
             self.path = path
             self.images = glob.glob(os.path.join(path, 'images','*.jpg'))
@@ -107,24 +107,38 @@ class MyDataset(Dataset):
 
 # ---- Load Dataset ----
 
-def get_dataloader(path=None, load_test=False, batch_size=16, batch_trim=False):
+def get_dataloader(path=None, load_test=False, batch_size=16, batch_trim=False, overwrite=False, out_dir=None):
     '''
     Load pytorch batch data loader only
     '''
     if path is None:
         path = 'tmp'
-    print('Load test:', load_test)
-    batch_loader = DataLoader(
-        MyDataset(path, transforms=mytransform, load_test=load_test, batch_trim=batch_trim),
-        shuffle=True, batch_size=batch_size
-        )
-    print('Dataset Loaded:')
 
-    # sample_batch = next(iter(batch_loader))[0]
-    # print('Batch Shape -', sample_batch[0].shape)
-    # print('Single Image Shape -', sample_batch[0][0].shape)
-    # print('Single Mask Shape –', sample_batch[0][1].shape)
+    def filter_written(name):
+        img_path = f'{out_dir}/{name}.tif'
+        if os.path.exists(img_path):
+            return False
+        else:
+            return True
     
+    print('Load test:', load_test)
+    dataset = MyDataset(path, transforms=mytransform, load_test=load_test, batch_trim=batch_trim)
+
+    # Check if images have been written.
+    if overwrite:
+        # Don't filter 
+        pass
+    else
+        # Filter images.
+        print('Filtering images already written.')
+        dataset.images = list(filter(filter_written, self.images))
+        
+    print('Dataset Loaded.')
+
+    batch_loader = DataLoader(
+            dataset, shuffle=True, batch_size=batch_size
+            )
+
     return batch_loader
 
 # ------------------------------------------
