@@ -116,7 +116,7 @@ class MyDataset(Dataset):
 
 # ---- Load Dataset ----
 
-def get_dataloader(in_dir=None, load_test=False, batch_size=16, batch_trim=False, overwrite=False, out_dir=None):
+def get_dataloader(in_dir=None, load_test=False, batch_size=16, batch_trim=False, overwrite=False, out_dir=None, split=None):
     '''
     Load pytorch batch data loader only
     '''
@@ -129,7 +129,10 @@ def get_dataloader(in_dir=None, load_test=False, batch_size=16, batch_trim=False
             return True
     
     print('Load test:', load_test)
-    dataset = MyDataset(in_dir=in_dir, transforms=mytransform, load_test=load_test, batch_trim=batch_trim)
+    dataset = MyDataset(
+        in_dir=in_dir, transforms=mytransform,
+        load_test=load_test, batch_trim=batch_trim, split=None
+        )
 
     # Check if images have been written.
     if overwrite:
