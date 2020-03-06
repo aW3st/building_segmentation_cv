@@ -160,7 +160,7 @@ def predict_custom(model, model_name, in_dir, overwrite=False):
     Predict for the entire submission set.
     '''
 
-    out_dir = f'models/{model_name}/predictions'
+    out_dir = f'models/{model_name}/validation_samples'
     if not os.path.exists(out_dir+in_dir):
         os.makedirs(out_dir+in_dir)
 
@@ -191,7 +191,7 @@ def predict_custom(model, model_name, in_dir, overwrite=False):
 
         # Zip images, and save.
         for predict_img, img_name in zip(predict_imgs, img_names):
-            image_out_path = f'{out_dir}/{img_name}'
+            image_out_path = f'{out_dir}/{os.path.basename(img_name)}'
             predict_img.save(image_out_path)
 
     return None

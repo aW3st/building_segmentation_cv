@@ -176,7 +176,7 @@ def train_fastfcn_mod(
 
         running_loss = 0.0
 
-        for i, (images, targets) in enumerate(train_dataloader, 0):
+        for i, (images, targets, img_names) in enumerate(train_dataloader, 0):
             images = images.to(device)
             targets = targets.to(device).squeeze(1).round().long()
 

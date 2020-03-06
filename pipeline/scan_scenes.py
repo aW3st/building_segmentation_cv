@@ -1,9 +1,9 @@
-from ingest import Tile, Scene
+from pipeline.ingest import Tile, Scene
 from tqdm import tqdm
 from os import listdir, remove
 from os.path import isfile, join
 import pandas as pd, logging
-from gcloud import upload_blob
+from pipeline.gcloud import upload_blob
 import pdb
 import os
 logging.basicConfig(level=(logging.INFO))
