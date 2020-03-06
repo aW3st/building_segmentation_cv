@@ -9,7 +9,7 @@
 import torch
 import pipeline.fastfcn_modified as fcn_mod
 import os
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 import numpy as np
 
 
@@ -28,7 +28,7 @@ def save_model(model, model_nickname=None):
     Save a model to the correct dictionary
     '''
 
-    model_prefix = datetime.now(tz=timezone(-datetime.timedelta(hours=5))).strftime("%d-%m-%Y_%H-%M")
+    model_prefix = (datetime.now()-timedelta(hours=5)).strftime("%d-%m-%Y_%H-%M")
     if model_nickname is not None:
         model_name = model_prefix + "__" + model_nickname
     else:
