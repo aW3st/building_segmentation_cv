@@ -42,7 +42,7 @@ class MyDataset(Dataset):
         if self.load_test:
             print('Loading Test')
             self.path = 'submission_data/test'
-            self.images = glob.glob(os.path.join(self.path, '*.tif'))
+            self.images = glob.glob(os.path.join(self.path, '*'))
             self.images = [os.path.basename(g) for g in self.images]
         else:
             self.path = in_dir
