@@ -237,17 +237,17 @@ if __name__=='__main__':
             '-model_name', default=None, type=str, required=True,
             help='Name of model weights file in models directory')
     
-    args = parser.parse_args()
+    custom_args = parser.parse_args()
 
     if args.command == 'test':
-        MODEL = load_model_with_weights(model_name=args.model_name)
+        MODEL = load_model_with_weights(model_name=custom_args.model_name)
         MODEL.eval()
-        predict_test_set(model=MODEL, model_name=args.model_name)
+        predict_test_set(model=MODEL, model_name=custom_args.model_name)
     
     elif args.command =='custom':
-        MODEL = load_model_with_weights(model_name=args.model_name)
+        MODEL = load_model_with_weights(model_name=custom_args.model_name)
         MODEL.eval()
-        predict_custom(model=MODEL, model_name=args.model_name, in_dir=args.in_dir)
+        predict_custom(model=MODEL, model_name=custom_args.model_name, in_dir=custom_args.in_dir)
 
     else:
         MODEL_NAME = '04-03-2020__Wed__03-04__five_epoch_single_region'

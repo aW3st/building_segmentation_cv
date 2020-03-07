@@ -43,6 +43,7 @@ class MyDataset(Dataset):
             print('Loading Test')
             self.path = 'submission_data/test'
             self.images = glob.glob(os.path.join(self.path, '*.tif'))
+            self.images = [os.path.basename(g) for g in self.images]
         else:
             self.path = in_dir
             print(self.path)
@@ -112,8 +113,11 @@ def get_dataloader(in_dir=None, load_test=False, batch_size=16, batch_trim=False
         )
 
     # Check if images have been written.
+
     if overwrite:
         # Don't filter 
+        pass
+    elif load_test:
         pass
     else:
         # Filter images.
