@@ -4,6 +4,7 @@ import glob
 import os
 import re
 import numpy as np
+import pdb
 
 import torchvision.transforms as transforms
 from torch.utils.data import Dataset, DataLoader
@@ -117,11 +118,8 @@ def get_dataloader(in_dir=None, load_test=False, batch_size=16, batch_trim=False
     if overwrite:
         # Don't filter 
         pass
-    elif load_test:
-        pass
     else:
-        # Filter images.
-        print('Filtering images already written.')
+        print('Filtering images already written.')        
         dataset.images = list(filter(filter_written, dataset.images))
         if len(dataset.images)==0:
             print('All images already predicted')
@@ -224,5 +222,7 @@ def train_test_split(images, masks, split, tier=1):
     filtered_masks = list(filter(filter_regions, masks))
 
     assert len(filtered_imgs) == len(filtered_masks)
+
+    pdb.set_trace()
 
     return filtered_imgs, filtered_masks
