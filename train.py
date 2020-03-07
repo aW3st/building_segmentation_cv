@@ -95,6 +95,8 @@ def train_fastfcn_mod(
     Compile and train the modified FastFCN implementation.
     '''
 
+    torch.cuda.empty_cache()
+
     model_prefix = (datetime.now()-timedelta(hours=5)).strftime("%d-%m-%Y_%H-%M")
     if experiment_name is not None:
         experiment_name = model_prefix + "__" + experiment_name
@@ -158,10 +160,10 @@ def train_fastfcn_mod(
     #     in_dir=train_path, load_test=False, batch_size=batch_size, batch_trim=batch_trim, split=None
     #     )
     train_dataloader = get_dataloader(
-        in_dir=train_path, load_test=False, batch_size=batch_size, batch_trim=batch_trim, split='train'
+        in_dir=train_path, load_test=False, batch_size=batch_size//2, batch_trim=batch_trim, split='train'
         )
     val_dataloader = get_dataloader(
-        in_dir=train_path, load_test=False, batch_size=batch_size, batch_trim=batch_trim, split='test'
+        in_dir=train_path, load_test=False, batch_size=batch_size//2, batch_trim=batch_trim, split='test'
         )
 
     device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
@@ -189,7 +191,7 @@ def train_fastfcn_mod(
     #     se_loss=args.se_loss, aux=args.aux, nclass=2,
     #     se_weight=args.se_weight, aux_weight=args.aux_weight
     #     )
-
+    
     early_stopper = EarlyStopping(patience=7, verbose=True)
 
     for epoch in range(num_epochs):  # loop over the dataset multiple times
@@ -221,9 +223,12 @@ def train_fastfcn_mod(
                 train_loss = 0.0
 
         # Calculation Validation Loss
+        print('Epoch ended. Calculating Validation Loss')
+        
+        torch.cuda.empty_cache()
 
         val_loss = 0
-        for i, (images, masks, img_names) in enumerate(val_dataloader):
+        for i, (images, targets, img_names) in enumerate(val_dataloader):
             images = images.to(device)
             targets = targets.to(device).squeeze(1).round().long()
 
@@ -235,12 +240,11 @@ def train_fastfcn_mod(
             loss = criterion(*outputs, targets)
             val_loss += loss.item()
         
-        early_stopper(val_loss, model=model, experiment_name=experiment_name)
-            
         # --- end of data iteration -------
 
+        print("Validation loss calculated.")
         # Check for early stopping conditions:
-        early_stopper(running_loss, model, experiment_name)
+        early_stopper(val_loss, model, experiment_name)
 
         lr_scheduler.step()
 
