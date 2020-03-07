@@ -239,12 +239,12 @@ if __name__=='__main__':
     
     custom_args = parser.parse_args()
 
-    if args.command == 'test':
+    if custom_args.command == 'test':
         MODEL = load_model_with_weights(model_name=custom_args.model_name)
         MODEL.eval()
         predict_test_set(model=MODEL, model_name=custom_args.model_name)
     
-    elif args.command =='custom':
+    elif custom_args.command =='custom':
         MODEL = load_model_with_weights(model_name=custom_args.model_name)
         MODEL.eval()
         predict_custom(model=MODEL, model_name=custom_args.model_name, in_dir=custom_args.in_dir)
