@@ -7,16 +7,14 @@
 '''
 
 import argparse
-import os.path
-import sys
-import torch
-# import pipeline.fastfcn_modified as fcn_mod
-import pipeline.criterion as Criteron
-import pipeline.load as Load
-import pipeline.network as Network
 import os
-from datetime import datetime, timedelta, timezone
 import numpy as np
+import torch
+import pipeline.criterion as Criteron
+from pipeline.load import get_dataloader
+import pipeline.network as Network
+from datetime import datetime, timedelta
+
 
 
 class ObjectView:
@@ -70,7 +68,7 @@ class EarlyStopping:
 
         if self.best_score is None:
             self.best_score = score
-            self.save_checkpoint(val_loss, model)
+            self.save_checkpoint(val_loss, model, experiment_name)
         elif score < self.best_score + self.delta:
             self.counter += 1
             print(f'EarlyStopping counter: {self.counter} out of {self.patience}')
@@ -154,21 +152,21 @@ def train_fastfcn_mod(
     options['cuda'] = torch.cuda.is_available() and not options['no_cuda']
 
     # Convert options dict to attributed object
-    args = ObjectView(options)
+    model_args = ObjectView(options)
     
-    train_dataloader = fcn_mod.get_dataloader(
-        path=train_path, load_test=False, batch_size=batch_size, batch_trim=batch_trim, split=None
+    train_dataloader = get_dataloader(
+        in_dir=train_path, load_test=False, batch_size=batch_size, batch_trim=batch_trim, split=None
         )
-    # train_dataloader = fcn_mod.get_dataloader(
+    # train_dataloader = get_dataloader(
     #     path=train_path, load_test=False, batch_size=batch_size, batch_trim=batch_trim, split='train'
     #     )
-    # val_dataloader = fcn_mod.get_dataloader(
+    # val_dataloader = get_dataloader(
     #     path=train_path, load_test=False, batch_size=batch_size, batch_trim=batch_trim, split='test'
     #     )
 
     device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
     # Compile modified FastFCN model.
-    model = Network.get_model(args)
+    model = Network.get_model(model_args)
     model.to(device)
 
     # Optimizer (Adam)
@@ -182,8 +180,8 @@ def train_fastfcn_mod(
 
     # Loss Function (Segmentation Loss)
     criterion = Criteron.SegmentationLosses(
-        se_loss=args.se_loss, aux=args.aux, nclass=2,
-        se_weight=args.se_weight, aux_weight=args.aux_weight
+        se_loss=model_args.se_loss, aux=model_args.aux, nclass=2,
+        se_weight=model_args.se_weight, aux_weight=model_args.aux_weight
         )
 
     # # Loss Function (Lovasz Hinge)
@@ -192,7 +190,7 @@ def train_fastfcn_mod(
     #     se_weight=args.se_weight, aux_weight=args.aux_weight
     #     )
 
-    early_stopper = EarlyStopping(patience=7, verbose=True)
+    # early_stopper = EarlyStopping(patience=7, verbose=True)
 
     for epoch in range(num_epochs):  # loop over the dataset multiple times
 
@@ -203,7 +201,7 @@ def train_fastfcn_mod(
             targets = targets.to(device).squeeze(1).round().long()
 
             # get the inputs; data is a list of [inputs, labels]
-            targets.requires_grad=False
+            targets.requires_grad = False
             
             # zero the parameter gradients
             optimizer.zero_grad()
@@ -255,38 +253,38 @@ def train_fastfcn_mod(
 
 if __name__=='__main__':
 
-    parser = argparse.ArgumentParser(
+    PARSER = argparse.ArgumentParser(
         description=__doc__,
         formatter_class=argparse.RawDescriptionHelpFormatter
     )
-    subparsers = parser.add_subparsers(dest='command')
+    SUBPARSERS = PARSER.add_subparsers(dest='command')
 
-    train_parser = subparsers.add_parser('all', help=train_fastfcn_mod.__doc__)
-    train_parser.add_argument(
+    TRAIN_PARSER = SUBPARSERS.add_parser('all', help=train_fastfcn_mod.__doc__)
+    TRAIN_PARSER.add_argument(
         '-name', default=None, type=str, required=False,
         help='Experiment name.')
-    train_parser.add_argument(
+    TRAIN_PARSER.add_argument(
         '-epochs', default=2, type=int, required=False,
         help='Number of epochs.')
-    train_parser.add_argument(
+    TRAIN_PARSER.add_argument(
         '-report', default=5, type=int, required=False,
         help='Number of batches between loss reports (int).')
-    train_parser.add_argument(
+    TRAIN_PARSER.add_argument(
         '-batch_size', default=16, type=int, required=False,
         help='The filter used to match logs.')
-    train_parser.add_argument(
+    TRAIN_PARSER.add_argument(
         '-train_path', default=None, type=str, required=False,
         help='Folder containing training images, with images and masks subdirectory.')
-    train_parser.add_argument(
+    TRAIN_PARSER.add_argument(
         '-batch_trim', default=None, type=int, required=False,
         help='Option to only train for a limit number of batches in each epoch.')
 
-    args = parser.parse_args()
-    print('Args:\n', args)
+    PARSED_ARGS = PARSER.parse_args()
+    print('Args:\n', PARSED_ARGS)
 
-    if args.command == 'all':
+    if PARSED_ARGS.command == 'all':
         train_fastfcn_mod(
-            num_epochs=args.epochs, reporting_int=args.report,
-            batch_size=args.batch_size, experiment_name=args.name,
-            train_path=args.train_path, batch_trim=args.batch_trim
+            num_epochs=PARSED_ARGS.epochs, reporting_int=PARSED_ARGS.report,
+            batch_size=PARSED_ARGS.batch_size, experiment_name=PARSED_ARGS.name,
+            train_path=PARSED_ARGS.train_path, batch_trim=PARSED_ARGS.batch_trim
             )

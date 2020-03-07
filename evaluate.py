@@ -1,22 +1,27 @@
 import torch
-from torch.nn.functional import softmax
 from PIL import Image
 import numpy as np
 import sys,os
 
 from torchvision import transforms
-import pdb
-
-import pipeline.fastfcn_modified as fcn_mod
 
 from tqdm import tqdm
 
-from FastFCN.encoding.models import MultiEvalModule
-import FastFCN.encoding.utils as utils
-from pipeline.fastfcn_modified import get_model
-from pipeline.train import ObjectView
+import pipeline.criterion as Criterion
+from pipeline.load import get_dataloader
+import pipeline.network as Network
 
 import argparse
+
+class ObjectView:
+    '''
+    Helper class to access dict values as attributes.
+
+    Replaces command-line arg-parse options.
+    '''
+    def __init__(self, d):
+        self.__dict__ = d
+
 
 def img_frombytes(data):
     size = data.shape[::-1]
@@ -76,8 +81,8 @@ def load_model_with_weights(model_name=None):
         'save-folder': 'experiments/segmentation/results', # 'path to save images'
     }
 
-    args = ObjectView(options)
-    model = get_model(args)
+    model_args = ObjectView(options)
+    model = Network.get_model(model_args)
 
     if model_name[-5:] == '_m.pt':
         model_name = model_name[:-5]
@@ -128,7 +133,7 @@ def predict_test_set(model, model_name, overwrite=False):
     if not os.path.exists(out_dir):
         os.makedirs(out_dir)
 
-    test_dataloader = fcn_mod.get_dataloader(load_test=True, batch_size=8, overwrite=overwrite, out_dir=out_dir)
+    test_dataloader = get_dataloader(load_test=True, batch_size=8, overwrite=overwrite, out_dir=out_dir)
     if test_dataloader == False:
         print('Exiting...')
         sys.exit()
@@ -138,7 +143,7 @@ def predict_test_set(model, model_name, overwrite=False):
 
     print('Beginning Prediction Loop')
     tbar = tqdm(test_dataloader)
-    for i, (image_tensors, img_names) in enumerate(tbar):        
+    for _, (image_tensors, img_names) in enumerate(tbar):        
 
         # Load tensors to GPU
         image_tensors = image_tensors.to(device)
@@ -164,7 +169,7 @@ def predict_custom(model, model_name, in_dir, overwrite=False):
     if not os.path.exists(out_dir+in_dir):
         os.makedirs(out_dir+in_dir)
 
-    test_dataloader = fcn_mod.get_dataloader(
+    test_dataloader = get_dataloader(
         in_dir=in_dir, batch_size=8,
         overwrite=overwrite, out_dir=out_dir
         )
@@ -178,7 +183,7 @@ def predict_custom(model, model_name, in_dir, overwrite=False):
 
     print('Beginning Prediction Loop')
     tbar = tqdm(test_dataloader)
-    for i, (images, targets, img_names) in enumerate(tbar):
+    for _, (images, targets, img_names) in enumerate(tbar):
     
         # Load tensors to GPU
         images = images.to(device)

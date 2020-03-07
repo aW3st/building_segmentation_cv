@@ -31,10 +31,13 @@ class MyDataset(Dataset):
     '''
     Custom PyTorch Dataset class.
     '''
-    def __init__(self, in_dir='tmp', transforms=None, load_test=False, split=None, batch_trim=False):
+    def __init__(self, in_dir=None, custom_transforms=None, load_test=False, split=None, batch_trim=False):
 
-        self.transforms = transforms
+        self.transforms = custom_transforms
         self.load_test = load_test
+
+        if in_dir is None:
+            in_dir = 'data/tmp'
         
         if self.load_test:
             print('Loading Test')
@@ -42,7 +45,10 @@ class MyDataset(Dataset):
             self.images = glob.glob(os.path.join(self.path, '*.tif'))
         else:
             self.path = in_dir
-            self.images = glob.glob(os.path.join(self.path, 'images','*.jpg'))
+            print(self.path)
+            pattern = os.path.join(self.path, 'images', '*.jpg')
+            print(pattern)
+            self.images = glob.glob(pattern)
             self.basenames = [os.path.basename(g) for g in self.images]
             self.images = []
             self.masks = []
@@ -55,7 +61,7 @@ class MyDataset(Dataset):
 
             if split is not None:
                 self.images, self.masks = train_test_split(self.images, self.masks, split=split)
-                pdb.set_trace()
+                # pdb.set_trace()
 
             self.coordinates = None
         
@@ -101,7 +107,7 @@ def get_dataloader(in_dir=None, load_test=False, batch_size=16, batch_trim=False
     
     print('Load test:', load_test)
     dataset = MyDataset(
-        in_dir=in_dir, transforms=mytransform,
+        in_dir=in_dir, custom_transforms=mytransform,
         load_test=load_test, batch_trim=batch_trim, split=split
         )
 
@@ -194,7 +200,7 @@ def train_test_split(images, masks, split, tier=1):
         '''
         Filter filenames according to allowed regions.
         '''
-        region, x_pos, y_pos, ext = filename.split('_')
+        _, x_pos, y_pos, _ = filename.split('_')
     
         for key, values in regions.items():
             

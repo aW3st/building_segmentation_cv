@@ -63,7 +63,7 @@ class BaseNet(nn.Module):
         if self.jpu:
             return self.jpu(c1, c2, c3, c4)
         else:
-          return c1, c2, c3, c4
+            return c1, c2, c3, c4
 
     def evaluate(self, x, target=None):
         pred = self.forward(x)

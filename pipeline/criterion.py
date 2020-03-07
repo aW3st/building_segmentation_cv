@@ -1,13 +1,14 @@
 
-from torch.nn import Module, Sequential, Conv2d, ReLU, AdaptiveAvgPool2d, BCELoss, CrossEntropyLoss
-
+import torch
+from torch.nn import BCELoss, CrossEntropyLoss
+import math
 from LovaszSoftmax.pytorch.lovasz_losses import lovasz_grad, lovasz_hinge, lovasz_softmax
 
 # ----- Lovasz Softmax ------
 
-class LovaszLosses():
-    '''Lovasz Loss'''
-    def __
+# class LovaszLosses():
+#     '''Lovasz Loss'''
+#     def __
 
 
 # ---- Segmentation Loss ----
