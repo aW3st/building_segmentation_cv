@@ -1,1 +1,0 @@
-from pipeline.train_test_split import split_regions

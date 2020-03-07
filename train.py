@@ -10,7 +10,10 @@ import argparse
 import os.path
 import sys
 import torch
-import pipeline.fastfcn_modified as fcn_mod
+# import pipeline.fastfcn_modified as fcn_mod
+import pipeline.criterion as Criteron
+import pipeline.load as Load
+import pipeline.network as Network
 import os
 from datetime import datetime, timedelta, timezone
 import numpy as np
@@ -165,7 +168,7 @@ def train_fastfcn_mod(
 
     device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
     # Compile modified FastFCN model.
-    model = fcn_mod.get_model(args)
+    model = Network.get_model(args)
     model.to(device)
 
     # Optimizer (Adam)
@@ -177,11 +180,17 @@ def train_fastfcn_mod(
         optimizer, step_size=3, gamma=0.1
         )
 
-    # Loss Function (modified)
-    criterion = fcn_mod.SegmentationLosses(
+    # Loss Function (Segmentation Loss)
+    criterion = Criteron.SegmentationLosses(
         se_loss=args.se_loss, aux=args.aux, nclass=2,
         se_weight=args.se_weight, aux_weight=args.aux_weight
         )
+
+    # # Loss Function (Lovasz Hinge)
+    # criterion = Criteron.SegmentationLosses(
+    #     se_loss=args.se_loss, aux=args.aux, nclass=2,
+    #     se_weight=args.se_weight, aux_weight=args.aux_weight
+    #     )
 
     early_stopper = EarlyStopping(patience=7, verbose=True)
 
@@ -215,20 +224,20 @@ def train_fastfcn_mod(
 
         # Calculation Validation Loss
 
-        val_loss = 0
-        for i (images, masks, img_names) in val_dataloader:
-            images = images.to(device)
-            targets = targets.to(device).squeeze(1).round().long()
+        # val_loss = 0
+        # for i, (images, masks, img_names) in enumerate(val_dataloader):
+        #     images = images.to(device)
+        #     targets = targets.to(device).squeeze(1).round().long()
 
-            # get the inputs; data is a list of [inputs, labels]
-            images.requires_grad=False
-            targets.requires_grad=False
+        #     # get the inputs; data is a list of [inputs, labels]
+        #     images.requires_grad=False
+        #     targets.requires_grad=False
 
-            outputs = model(images)
-            loss = criterion(*outputs, targets)
-            val_loss += loss.item()
+        #     outputs = model(images)
+        #     loss = criterion(*outputs, targets)
+        #     val_loss += loss.item()
         
-        early_stopper(val_loss, model=model, experiment_name=experiment_name)
+        # early_stopper(val_loss, model=model, experiment_name=experiment_name)
             
         # --- end of data iteration -------
 
