@@ -38,7 +38,7 @@ class MyDataset(Dataset):
         self.load_test = load_test
 
         if in_dir is None:
-            in_dir = 'data/tmp'
+            in_dir = 'training_data'
         
         if self.load_test:
             print('Loading Test')
@@ -60,6 +60,8 @@ class MyDataset(Dataset):
                 if (os.path.exists(img) and os.path.exists(mask)):
                     self.images.append(img)
                     self.masks.append(mask)
+            
+            pdb.set_trace()
 
             if split is not None:
                 self.images, self.masks = train_test_split(self.images, self.masks, split=split)
@@ -202,6 +204,8 @@ def train_test_split(images, masks, split, tier=1):
         '''
         Filter filenames according to allowed regions.
         '''
+
+        filename = os.path.basename(filename)
         _, x_pos, y_pos, _ = filename.split('_')
     
         for key, values in regions.items():

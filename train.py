@@ -158,10 +158,10 @@ def train_fastfcn_mod(
     #     in_dir=train_path, load_test=False, batch_size=batch_size, batch_trim=batch_trim, split=None
     #     )
     train_dataloader = get_dataloader(
-        path=train_path, load_test=False, batch_size=batch_size, batch_trim=batch_trim, split='train'
+        in_dir=train_path, load_test=False, batch_size=batch_size, batch_trim=batch_trim, split='train'
         )
     val_dataloader = get_dataloader(
-        path=train_path, load_test=False, batch_size=batch_size, batch_trim=batch_trim, split='test'
+        in_dir=train_path, load_test=False, batch_size=batch_size, batch_trim=batch_trim, split='test'
         )
 
     device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
@@ -239,7 +239,7 @@ def train_fastfcn_mod(
             
         # --- end of data iteration -------
 
-        Check for early stopping conditions:
+        # Check for early stopping conditions:
         early_stopper(running_loss, model, experiment_name)
 
         lr_scheduler.step()
