@@ -5,28 +5,48 @@ import os
 import re
 import numpy as np
 import pdb
-
+import torch
 import torchvision.transforms as transforms
 from torch.utils.data import Dataset, DataLoader
 from PIL import Image
 
-
+colorjitter = transforms.ColorJitter(brightness=0.25, contrast=0.25, saturation=0.25, hue=0.25)
 # ---- Image Utitilies ----
 
-def mytransform(image, mask):
+def train_transform(image, mask):
     '''
     Custom Pytorch randomized preprocessing of training image and mask.
     '''
     image = transforms.functional.pad(image, padding=0, padding_mode='reflect')
     crop_loc = np.random.randint(0, 728, 2)
-    image = transforms.functional.crop(image, *crop_loc, 512, 512)
-    mask = transforms.functional.crop(mask, *crop_loc, 512, 512)
+    image = transforms.functional.crop(image, *crop_loc, 400, 400)
+    mask = transforms.functional.crop(mask, *crop_loc, 400, 400)
+    image = colorjitter(image)
     image = transforms.functional.to_tensor(image)
     mask = transforms.functional.to_tensor(mask)
     return image, mask
 
+def val_transform(image, mask):
+    image = transforms.functional.center_crop(image, 400)
+    mask = transforms.functional.center_crop(mask, 400)
+    image = transforms.functional.to_tensor(image)
+    mask = transforms.functional.to_tensor(mask)
+    return image, mask
 
 # ---- Dataset Class ----
+class DatasetWrapper(Dataset):
+    def __init__(self, subset, transform=None):
+        self.subset = subset
+        self.transform = transform
+        
+    def __getitem__(self, index):
+        x, y, z = self.subset[index]
+        if self.transform:
+            x,y = self.transform(x,y)
+        return x, y, z
+        
+    def __len__(self):
+        return len(self.subset)
 
 class MyDataset(Dataset):
     '''
@@ -61,10 +81,9 @@ class MyDataset(Dataset):
                     self.images.append(img)
                     self.masks.append(mask)
             
-            pdb.set_trace()
 
-            if split is not None:
-                self.images, self.masks = train_test_split(self.images, self.masks, split=split)
+            #if split is not None:
+            #    self.images, self.masks = train_test_split(self.images, self.masks, split=split)
                 # pdb.set_trace()
 
             self.coordinates = None
@@ -103,7 +122,7 @@ def get_dataloader(in_dir=None, load_test=False, batch_size=16, batch_trim=False
     '''
 
     def filter_written(name):
-        img_path = f'{out_dir}/{name}.tif'
+        img_path = '{}/{}.tif'.format(out_dir, name)
         if os.path.exists(img_path):
             return False
         else:
@@ -111,7 +130,7 @@ def get_dataloader(in_dir=None, load_test=False, batch_size=16, batch_trim=False
     
     print('Load test:', load_test)
     dataset = MyDataset(
-        in_dir=in_dir, custom_transforms=mytransform,
+        in_dir=in_dir, custom_transforms=None,
         load_test=load_test, batch_trim=batch_trim, split=split
         )
 
@@ -126,11 +145,20 @@ def get_dataloader(in_dir=None, load_test=False, batch_size=16, batch_trim=False
         if len(dataset.images)==0:
             print('All images already predicted')
             return False
+    if split=='random':
+        train_len = int(len(dataset)*0.8)
+        lengths = [train_len, len(dataset)-train_len]
+        train_subset, val_subset = torch.utils.data.random_split(dataset, lengths)
+        val_dataset = DatasetWrapper(val_subset, transform=val_transform)
+        train_dataset = DatasetWrapper(train_subset, transform=train_transform)
+        train_loader = DataLoader(train_dataset, shuffle=True, batch_size=batch_size, pin_memory=True,num_workers=3)
+        val_loader = DataLoader(val_dataset, shuffle=False, batch_size=batch_size//4, pin_memory=True, num_workers=3)
+        return train_loader, val_loader
 
     print('Dataset Loaded.')
 
     batch_loader = DataLoader(
-            dataset, shuffle=True, batch_size=batch_size
+            dataset, shuffle=True, batch_size=batch_size, pin_memory=True
             )
 
     return batch_loader
@@ -222,11 +250,10 @@ def train_test_split(images, masks, split, tier=1):
                 return True
         return False
 
-    filtered_imgs = list(filter(filter_regions, images))
-    filtered_masks = list(filter(filter_regions, masks))
+    #filtered_imgs = list(filter(filter_regions, images))
+    #filtered_masks = list(filter(filter_regions, masks))
 
-    assert len(filtered_imgs) == len(filtered_masks)
+    #assert len(filtered_imgs) == len(filtered_masks)
 
-    pdb.set_trace()
-
-    return filtered_imgs, filtered_masks
+    #pdb.set_trace()
+    #return filtered_imgs, filtered_masks

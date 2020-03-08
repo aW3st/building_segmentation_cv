@@ -71,7 +71,7 @@ class EarlyStopping:
             self.save_checkpoint(val_loss, model, experiment_name)
         elif score < self.best_score + self.delta:
             self.counter += 1
-            print(f'EarlyStopping counter: {self.counter} out of {self.patience}')
+            print('EarlyStopping counter: {} out of {}'.format(self.counter, self.patience))
             if self.counter >= self.patience:
                 self.early_stop = True
         else:
@@ -82,7 +82,7 @@ class EarlyStopping:
     def save_checkpoint(self, val_loss, model, experiment_name):
         '''Saves model when validation loss decrease.'''
         if self.verbose:
-            print(f'Validation loss decreased ({self.val_loss_min:.6f} --> {val_loss:.6f}).  Saving model ...')
+            print('Validation loss decreased ({} --> {}).  Saving model ...'.format(self.val_loss_min, val_loss))
         save_model(model, experiment_name=experiment_name + '_chkpt')
         self.val_loss_min = val_loss
 
@@ -159,12 +159,12 @@ def train_fastfcn_mod(
     # train_dataloader = get_dataloader(
     #     in_dir=train_path, load_test=False, batch_size=batch_size, batch_trim=batch_trim, split=None
     #     )
-    train_dataloader = get_dataloader(
-        in_dir=train_path, load_test=False, batch_size=batch_size//2, batch_trim=batch_trim, split='train'
+    train_dataloader, val_dataloader = get_dataloader(
+        in_dir=train_path, load_test=False, batch_size=batch_size, batch_trim=batch_trim, split='random'
         )
-    val_dataloader = get_dataloader(
-        in_dir=train_path, load_test=False, batch_size=batch_size//2, batch_trim=batch_trim, split='test'
-        )
+    # val_dataloader = get_dataloader(
+    #    in_dir=train_path, load_test=False, batch_size=batch_size//2, batch_trim=batch_trim, split='test'
+    #    )
 
     device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
     # Compile modified FastFCN model.
