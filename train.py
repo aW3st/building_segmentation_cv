@@ -226,27 +226,29 @@ def train_fastfcn_mod(
         print('Epoch ended. Calculating Validation Loss')
         
         torch.cuda.empty_cache()
-
-        val_loss = 0
-        for i, (images, targets, img_names) in enumerate(val_dataloader):
-            images = images.to(device)
-            targets = targets.to(device).squeeze(1).round().long()
-
-            # get the inputs; data is a list of [inputs, labels]
-            images.requires_grad=False
-            targets.requires_grad=False
-
-            outputs = model(images)
-            loss = criterion(*outputs, targets)
-            val_loss += loss.item()
         
-        # --- end of data iteration -------
+        with torch.no_grad():
+            model.eval()
+            val_loss = 0
+            for i, (images, targets, img_names) in enumerate(val_dataloader):
+                images = images.to(device)
+                targets = targets.to(device).squeeze(1).round().long()
 
-        print("Validation loss calculated.")
-        # Check for early stopping conditions:
-        early_stopper(val_loss, model, experiment_name)
+                # get the inputs; data is a list of [inputs, labels]
+                images.requires_grad=False
+                targets.requires_grad=False
 
-        lr_scheduler.step()
+                outputs = model(images)
+                loss = criterion(*outputs, targets)
+                val_loss += loss.item()
+            
+            # --- end of data iteration -------
+
+            print("Validation loss calculated.")
+            # Check for early stopping conditions:
+            early_stopper(val_loss, model, experiment_name)
+
+            lr_scheduler.step()
 
         # --- end of epoch -------
 
