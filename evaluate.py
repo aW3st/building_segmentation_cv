@@ -87,7 +87,7 @@ def load_model_with_weights(model_name=None):
     if model_name[-5:] == '_m.pt':
         model_name = model_name[:-5]
 
-    path_to_state_dict = f'models/{model_name}/{model_name}_m.pt'
+    path_to_state_dict = 'models/{}/{}_m.pt'.format(model_name, model_name)
     model.load_state_dict(torch.load(path_to_state_dict))
 
     return model
@@ -110,7 +110,7 @@ def get_single_pred(model, img_name=None, img_path = None):
     if img_path is None:
         if img_name is None:
             img_name = '0a0a36'
-        img_path = os.path.join(test_img_dir, f'{img_name}/{img_name}.tif')
+        img_path = os.path.join(test_img_dir, '{}/{}.tif'.format(img_name, img_name))
 
     img = Image.open(img_path)
     img_tensor = transforms.functional.to_tensor(img)[:3].to(device)
@@ -129,7 +129,7 @@ def predict_test_set(model, model_name, overwrite=False):
     Predict for the entire submission set.
     '''
 
-    out_dir = f'models/{model_name}/predictions'
+    out_dir = 'models/{}/predictions'.format(model_name)
     if not os.path.exists(out_dir):
         os.makedirs(out_dir)
 
@@ -155,7 +155,7 @@ def predict_test_set(model, model_name, overwrite=False):
 
         # Zip images, and save.
         for predict_img, img_name in zip(predict_imgs, img_names):
-            image_out_path = f'models/{model_name}/predictions/{img_name}.tif'
+            image_out_path = 'models/{}/predictions/{}.tif'.format(model_name, img_name)
             predict_img.save(image_out_path, compression="tiff_deflate")
 
     return None
@@ -165,7 +165,7 @@ def predict_custom(model, model_name, in_dir, overwrite=False):
     Predict for the entire submission set.
     '''
 
-    out_dir = f'models/{model_name}/validation_samples'
+    out_dir = 'models/{}/validation_samples'.format(model_name)
     if not os.path.exists(out_dir+in_dir):
         os.makedirs(out_dir+in_dir)
 
@@ -196,7 +196,7 @@ def predict_custom(model, model_name, in_dir, overwrite=False):
 
         # Zip images, and save.
         for predict_img, img_name in zip(predict_imgs, img_names):
-            image_out_path = f'{out_dir}/{os.path.basename(img_name)}'
+            image_out_path = '{}/{}'.format(outdir, os.path.basename(img_name))
             predict_img.save(image_out_path)
 
     return None
