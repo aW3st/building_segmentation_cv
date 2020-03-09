@@ -71,7 +71,7 @@ class EarlyStopping:
             self.save_checkpoint(val_loss, model, experiment_name)
         elif score < self.best_score + self.delta:
             self.counter += 1
-            print('EarlyStopping counter: {} out of {}'.format(self.counter, self.patience))
+            print('Validaton Loss={}, best score = {}. \nEarlyStopping counter: {} out of {}'.format(score, self.bet_score, self.counter, self.patience))
             if self.counter >= self.patience:
                 self.early_stop = True
         else:
@@ -195,6 +195,9 @@ def train_fastfcn_mod(
     early_stopper = EarlyStopping(patience=7, verbose=True)
 
     for epoch in range(num_epochs):  # loop over the dataset multiple times
+
+        if early_stopper.early_stop == True:
+            break
 
         train_loss = 0.0
 
