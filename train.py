@@ -159,17 +159,11 @@ def train_fastfcn_mod(
     model_args = ObjectView(options)
     
     train_dataloader = get_dataloader(
-        in_dir=train_path, load_test=False, batch_size=batch_size, batch_trim=batch_trim, split='train'
+        in_dir=train_path, load_test=False, batch_size=batch_size//2, batch_trim=batch_trim, split='train'
         )
     val_dataloader = get_dataloader(
-        in_dir=train_path, load_test=False, batch_size=batch_size, batch_trim=batch_trim, split='test'
+        in_dir=train_path, load_test=False, batch_size=batch_size//2, batch_trim=batch_trim, split='test'
         )
-    # train_dataloader, val_dataloader = get_dataloader(
-    #     in_dir=train_path, load_test=False, batch_size=batch_size, batch_trim=batch_trim, split='random'
-    #     )
-    # val_dataloader = get_dataloader(
-    #    in_dir=train_path, load_test=False, batch_size=batch_size//2, batch_trim=batch_trim, split='test'
-    #    )
 
     device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
     # Compile modified FastFCN model.
@@ -197,12 +191,12 @@ def train_fastfcn_mod(
     #     se_weight=args.se_weight, aux_weight=args.aux_weight
     #     )
     
-    if options.early_stopping:
+    if model_args.early_stopping:
         early_stopper = EarlyStopping(patience=7, verbose=True)
 
     for epoch in range(num_epochs):  # loop over the dataset multiple times
 
-        if options.early_stopping:
+        if model_args.early_stopping:
             if early_stopper.early_stop:
                 break
 
@@ -238,7 +232,7 @@ def train_fastfcn_mod(
 
         # torch.cuda.empty_cache() # Necessary?!?
         
-        if options.validation:
+        if model_args.validation:
             print('Calculating Validation Loss')
             with torch.no_grad():
                 model.eval()
@@ -258,17 +252,17 @@ def train_fastfcn_mod(
                 # --- end of data iteration -------
                 print("Validation loss calculated:", val_loss)
                 
-            if options.early_stopping:
+            if model_args.early_stopping:
                 # Check for early stopping conditions:
                 early_stopper(val_loss, model, experiment_name)
 
 
         # --- Save model if not using early stopping ----
-        if not options.early_stopping:
+        if not model_args.early_stopping:
             save_model(model, experiment_name=experiment_name + '_chkpt')
-            print('Checkpoint saved at epoch,', epoch)
+            print('Checkpoint saved at epoch,', epoch+1)
 
-        print('Epoch,', epoch, 'ended.')
+        print('Epoch,', epoch+1, 'ended.')
         # --- end of epoch -------
 
     save_model(model, experiment_name)

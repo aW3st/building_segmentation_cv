@@ -58,6 +58,7 @@ def is_valid_loc(basename, split):
     '''
     Filter basenames according to allowed regions.
     '''
+    basename = os.path.basename(basename)
     region, x_pos, y_pos, ext = basename.split('_')
 
     train_regions = {
@@ -282,7 +283,7 @@ def get_dataloader(in_dir=None, load_test=False, batch_size=16, batch_trim=False
         in_dir=in_dir, custom_transforms=custom_transforms,
         load_test=load_test, batch_trim=batch_trim, split=split
         )
-
+    
     # Check if images have been written.
 
     if split=='random':
