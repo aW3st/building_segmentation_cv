@@ -105,10 +105,12 @@ def train_fastfcn_mod(
 
     if options is None:
         options = {
+            'early_stopping': False,
+            'validation': False,
             'model': 'encnet', # model name (default: encnet)
             'backbone': 'resnet50', # backbone name (default: resnet50)
             'jpu': True, # 'JPU'
-            'dilated': False, # 'dilation'
+            'dilated': True, # 'dilation'
             'lateral': False, #'employ FPN')
             'dataset':'ade20k', # 'dataset name (default: pascal12)')
             'workers': 16, # dataloader threads
@@ -134,7 +136,7 @@ def train_fastfcn_mod(
 
             # cuda, seed and logging
             'no_cuda': False, # 'disables CUDA training'
-            'seed': 1, # 'random seed (default: 1)'
+            'seed': 100, # 'random seed (default: 1)'
 
             # checking point
             'resume': None, # 'put the path to resuming file if needed'
@@ -173,11 +175,11 @@ def train_fastfcn_mod(
 
     # Optimizer (Adam)
     params = [p for p in model.parameters() if p.requires_grad]
-    optimizer = torch.optim.Adam(params, lr=0.005, weight_decay=0.0005)
+    optimizer = torch.optim.Adam(params, lr=0.0005, weight_decay=0.0005)
 
     # Larning rate scheduler
     lr_scheduler = torch.optim.lr_scheduler.StepLR(
-        optimizer, step_size=3, gamma=0.1
+        optimizer, step_size=2, gamma=0.5
         )
 
     # Loss Function (Segmentation Loss)
@@ -192,12 +194,14 @@ def train_fastfcn_mod(
     #     se_weight=args.se_weight, aux_weight=args.aux_weight
     #     )
     
-    early_stopper = EarlyStopping(patience=7, verbose=True)
+    if options.early_stopping:
+        early_stopper = EarlyStopping(patience=7, verbose=True)
 
     for epoch in range(num_epochs):  # loop over the dataset multiple times
 
-        if early_stopper.early_stop == True:
-            break
+        if options.early_stopping:
+            if early_stopper.early_stop:
+                break
 
         train_loss = 0.0
 
@@ -225,34 +229,43 @@ def train_fastfcn_mod(
                     (epoch + 1, i + 1, train_loss / reporting_int))
                 train_loss = 0.0
 
-        # Calculation Validation Loss
-        print('Epoch ended. Calculating Validation Loss')
-        
-        torch.cuda.empty_cache()
-        
-        with torch.no_grad():
-            model.eval()
-            val_loss = 0
-            for i, (images, targets, img_names) in enumerate(val_dataloader):
-                images = images.to(device)
-                targets = targets.to(device).squeeze(1).round().long()
-
-                # get the inputs; data is a list of [inputs, labels]
-                images.requires_grad=False
-                targets.requires_grad=False
-
-                outputs = model(images)
-                loss = criterion(*outputs, targets)
-                val_loss += loss.item()
-            
-            # --- end of data iteration -------
-
-            print("Validation loss calculated.")
-            # Check for early stopping conditions:
-            early_stopper(val_loss, model, experiment_name)
-
             lr_scheduler.step()
 
+        # Calculation Validation Loss
+
+        # torch.cuda.empty_cache() # Necessary?!?
+        
+        if options.validation:
+            print('Calculating Validation Loss')
+            with torch.no_grad():
+                model.eval()
+                val_loss = 0
+                for i, (images, targets, img_names) in enumerate(val_dataloader):
+                    images = images.to(device)
+                    targets = targets.to(device).squeeze(1).round().long()
+
+                    # get the inputs; data is a list of [inputs, labels]
+                    images.requires_grad=False
+                    targets.requires_grad=False
+
+                    outputs = model(images)
+                    loss = criterion(*outputs, targets)
+                    val_loss += loss.item()
+                
+                # --- end of data iteration -------
+                print("Validation loss calculated:", val_loss)
+                
+            if options.early_stopping:
+                # Check for early stopping conditions:
+                early_stopper(val_loss, model, experiment_name)
+
+
+        # --- Save model if not using early stopping ----
+        if not options.early_stopping:
+            save_model(model, experiment_name=experiment_name + '_chkpt')
+            print('Checkpoint saved at epoch,', epoch)
+
+        print('Epoch,', epoch, 'ended.')
         # --- end of epoch -------
 
     save_model(model, experiment_name)
@@ -273,10 +286,10 @@ if __name__=='__main__':
         '-name', default=None, type=str, required=False,
         help='Experiment name.')
     TRAIN_PARSER.add_argument(
-        '-epochs', default=2, type=int, required=False,
+        '-epochs', default=8, type=int, required=False,
         help='Number of epochs.')
     TRAIN_PARSER.add_argument(
-        '-report', default=5, type=int, required=False,
+        '-report', default=10, type=int, required=False,
         help='Number of batches between loss reports (int).')
     TRAIN_PARSER.add_argument(
         '-batch_size', default=16, type=int, required=False,
