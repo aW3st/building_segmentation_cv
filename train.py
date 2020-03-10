@@ -106,7 +106,7 @@ def train_fastfcn_mod(
     if options is None:
         options = {
             'early_stopping': False,
-            'validation': False,
+            'validation': True,
             'model': 'encnet', # model name (default: encnet)
             'backbone': 'resnet50', # backbone name (default: resnet50)
             'jpu': True, # 'JPU'
@@ -158,12 +158,15 @@ def train_fastfcn_mod(
     # Convert options dict to attributed object
     model_args = ObjectView(options)
     
-    # train_dataloader = get_dataloader(
-    #     in_dir=train_path, load_test=False, batch_size=batch_size, batch_trim=batch_trim, split=None
-    #     )
-    train_dataloader, val_dataloader = get_dataloader(
-        in_dir=train_path, load_test=False, batch_size=batch_size, batch_trim=batch_trim, split='random'
+    train_dataloader = get_dataloader(
+        in_dir=train_path, load_test=False, batch_size=batch_size, batch_trim=batch_trim, split='train'
         )
+    val_dataloader = get_dataloader(
+        in_dir=train_path, load_test=False, batch_size=batch_size, batch_trim=batch_trim, split='test'
+        )
+    # train_dataloader, val_dataloader = get_dataloader(
+    #     in_dir=train_path, load_test=False, batch_size=batch_size, batch_trim=batch_trim, split='random'
+    #     )
     # val_dataloader = get_dataloader(
     #    in_dir=train_path, load_test=False, batch_size=batch_size//2, batch_trim=batch_trim, split='test'
     #    )

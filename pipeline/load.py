@@ -13,64 +13,108 @@ from PIL import Image
 colorjitter = transforms.ColorJitter(brightness=0.25, contrast=0.25, saturation=0.25, hue=0.25)
 # ---- Image Utitilies ----
 
+CITY_REGION_CTS = {
+    'znz': {
+        '_total': 19717,
+        '076995': 1701,
+        '75cdfa': 2304,
+        '425403': 1444,
+        '33cae6': 1106,
+        '06f252': 2387,
+        'e52478': 601,
+        'c7415c': 1346,
+        'bc32f1': 1521,
+        '3f8360': 1086,
+        'aee7fd': 1521,
+        '9b8638': 1482,
+        'bd5c14': 1369,
+        '3b20d4': 1849},
+    'dar': {
+        '_total': 12356,
+        '353093': 1364,
+        'f883a0': 4094,
+        '0a4c40': 1604,
+        '42f235': 2257,
+        'a017f9': 1642,
+        'b15fce': 1395},
+    'acc': {
+        '_total': 10603,
+        '665946': 6982,
+        'a42435': 1318,
+        'ca041a': 1566,
+        'd41d81': 737},
+    'ptn': {'_total': 44, 'abe1a3': 31, 'f49f31': 13},
+    'kam': {'_total': 868, '4e7c7f': 868},
+    'mon': {
+        '_total': 803,
+        '401175': 192,
+        '493701': 280,
+        'f15272': 205,
+        '207cc7': 126},
+    'nia': {'_total': 65, '825a50': 65}
+    }
+
 def is_valid_loc(basename, split):
     '''
     Filter basenames according to allowed regions.
     '''
     region, x_pos, y_pos, ext = basename.split('_')
-    
-    # 6 of 7 cities used for train region
-    # Training regs are 86.0% of total area
-    # Training regs are 65.0% of unique blocks
-    # Train scene ID list (tier 1): ['f883a0' '4e7c7f' 'f15272' '825a50' 'f49f31' 'e52478']
-    # Test scene ID list (tier 1): ['d41d81']
 
     train_regions = {
-        'f883a0': {
-            'skip_region': [
-                # (x_0, x_1 , y_0, y_1), # x lim, y lim
-                # (x_0, x_1 , y_0, y_1), # x lim, y lim
-            ]
-        },
-        '4e7c7f': {
-            'skip_region': [
-                # (x_0, x_1 , y_0, y_1), # x lim, y lim
-                # (x_0, x_1 , y_0, y_1), # x lim, y lim
-            ]
-        },
-        'f15272': {
-            'skip_region': [
-                # (x_0, x_1 , y_0, y_1), # x lim, y lim
-                # (x_0, x_1 , y_0, y_1), # x lim, y lim
-            ]
-        },
-        '825a50': {
-            'skip_region': [
-                # (x_0, x_1 , y_0, y_1), # x lim, y lim
-                # (x_0, x_1 , y_0, y_1), # x lim, y lim
-            ]
-        },
-        'f49f31': {
-            'skip_region': [
-                # (x_0, x_1 , y_0, y_1), # x lim, y lim
-                # (x_0, x_1 , y_0, y_1), # x lim, y lim
-            ]
-        },
-        'e52478': {
-            'skip_region': [
-                # (x_0, x_1 , y_0, y_1), # x lim, y lim
-                # (x_0, x_1 , y_0, y_1), # x lim, y lim
-            ]
-        }
+        
+        # ZNZ - Zanzibar 
+        '076995': {'skip_region': []},
+        '75cdfa': {'skip_region': []},
+        '425403': {'skip_region': []},
+        '33cae6': {'skip_region': []},
+        '06f252': {'skip_region': []},
+        'e52478': {'skip_region': []},
+        'c7415c': {'skip_region': []},
+        'bc32f1': {'skip_region': []},
+        '3f8360': {'skip_region': []},
+        'aee7fd': {'skip_region': []},
+        '9b8638': {'skip_region': []},
+        'bd5c14': {'skip_region': []},
+        '3b20d4': {'skip_region': []},
+
+        # ACC - Accra
+        '665946': {'skip_region': []},
+        'a42435': {'skip_region': []},
+        'ca041a': {'skip_region': []},
+        'd41d81': {'skip_region': [
+            (-1024, np.inf , -1024, np.inf) # TEMPORARY EXCLUSION OF ENTIRE SCENE
+            ]},
+
+        # PTN
+        'abe1a3': {'skip_region': []},
+        'f49f31': {'skip_region': []},
+
+        # KAM
+        '4e7c7f': {'skip_region': []},
+
+        # MON
+        '401175': {'skip_region': []},
+        '493701': {'skip_region': []},
+        'f15272': {'skip_region': []},
+        '207cc7': {'skip_region': []},
+
+        # NIA
+        '825a50': {'skip_region': []},
+
     }
+
+
+    
     val_regions = {
-        'd41d81': {
-            'skip_region': [
-                
-                (-1024, np.inf , -1024, np.inf), # TEMPORARY EXCLUSION OF ENTIRE REGION
-                # (x_0, x_1 , y_0, y_1), # x lim, y lim
-            ]
-        }
+
+        # DAR
+        '353093': {'skip_region': []},
+        'f883a0': {'skip_region': []},
+        '0a4c40': {'skip_region': []},
+        '42f235': {'skip_region': []},
+        'a017f9': {'skip_region': []},
+        'b15fce': {'skip_region': []}
+        
     }
 
     def is_excluded(x_0, x_1, y_0, y_1):
@@ -81,7 +125,7 @@ def is_valid_loc(basename, split):
             # Check all matching regions.
             if reg == region:
                 # Skip regions that are badly labeled.
-                for x_0, x_1, y_0, y_1 in values['skip_region']:
+                for x_0, x_1, y_0, y_1 in d['skip_region']:
                     # print(x_0, x_1, y_0, y_1, "___", x_pos, y_pos)
                     if is_excluded(x_0, x_1, y_0, y_1):
                         return False
@@ -151,6 +195,7 @@ class MyDataset(Dataset):
 
         if in_dir is None:
             in_dir = 'training_data'
+            print(f'Pulling from directory {in_dir}')
         
         if self.load_test:
             print('Loading Test')
@@ -160,6 +205,7 @@ class MyDataset(Dataset):
                 self.path = 'submission_data/test'
             self.images = glob.glob(os.path.join(self.path, '*'))
             self.images = [os.path.basename(g) for g in self.images]
+
         else:
             self.path = in_dir
             print(self.path)
@@ -167,11 +213,11 @@ class MyDataset(Dataset):
             print(pattern)
             self.images = glob.glob(pattern)
 
-            if split==None:
+            if split is None:
                 self.basenames = [os.path.basename(g) for g in self.images]
-            elif split=='clean' or split=='train' or split=='test':
-                self.basenames = [os.path.basename(g) for g in self.images if is_valid_loc(g, split)]
 
+            elif split =='clean' or split == 'train' or split == 'test':
+                self.basenames = [os.path.basename(g) for g in self.images if is_valid_loc(g, split)]
 
             self.images = []
             self.masks = []
@@ -227,9 +273,13 @@ def get_dataloader(in_dir=None, load_test=False, batch_size=16, batch_trim=False
         else:
             return True
     
-    print('Load test:', load_test)
+    print('Getting dataset.')
+    if split == 'train' or split == 'random':
+        custom_transforms = train_transform
+    elif split == 'test':
+        custom_transforms = val_transform
     dataset = MyDataset(
-        in_dir=in_dir, custom_transforms=train_transform,
+        in_dir=in_dir, custom_transforms=custom_transforms,
         load_test=load_test, batch_trim=batch_trim, split=split
         )
 
