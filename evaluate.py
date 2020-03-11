@@ -35,6 +35,7 @@ def load_model_with_weights(model_name=None):
 
     options = {
         'use_jaccard': True,
+        'use_lovasz': True,
         'early_stopping': False,
         'validation': True,
         'model': 'encnet', # model name (default: encnet)

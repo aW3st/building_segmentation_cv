@@ -109,7 +109,11 @@ def train_fastfcn_mod(
         options = {
             'use_jaccard': True,
             'use_lovasz': True,
+<<<<<<< HEAD
             'early_stopping': True,
+=======
+            'early_stopping': False,
+>>>>>>> b3de0e6f73cd1bf541a84ddbcbe41311cb437613
             'validation': True,
             'model': 'encnet', # model name (default: encnet)
             'backbone': 'resnet50', # backbone name (default: resnet50)
