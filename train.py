@@ -197,6 +197,7 @@ def train_fastfcn_mod(
     if model_args.use_lovasz:
         # Loss Function (Lovasz Hinge)
         criterion = L.lovasz_hinge
+        
     else:
         # Loss Function (Segmentation Loss)
         criterion = Criterion.SegmentationLosses(
