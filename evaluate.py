@@ -34,10 +34,13 @@ def load_model_with_weights(model_name=None):
     '''
 
     options = {
+        'use_jaccard': True,
+        'early_stopping': False,
+        'validation': True,
         'model': 'encnet', # model name (default: encnet)
         'backbone': 'resnet50', # backbone name (default: resnet50)
         'jpu': True, # 'JPU'
-        'dilated': False, # 'dilation'
+        'dilated': True, # 'dilation'
         'lateral': False, #'employ FPN')
         'dataset':'ade20k', # 'dataset name (default: pascal12)')
         'workers': 16, # dataloader threads
@@ -50,12 +53,14 @@ def load_model_with_weights(model_name=None):
         'aux_weight': 0.2, # 'Auxilary loss weight (default: 0.2)'
         'se_loss': True, # 'Semantic Encoding Loss SE-loss'
         'se_weight': 0.2, # 'SE-loss weight (default: 0.2)'
-        'epochs': None, # 'number of epochs to train (default: auto)'
+        'epochs': num_epochs, # 'number of epochs to train (default: auto)'
         'start_epoch': 0, # 'start epochs (default:0)'
-        'batch_size': 4, # 'input batch size for training (default: auto)'
+        'batch_size': batch_size, # 'input batch size for training (default: auto)'
         'test_batch_size': None, # 'input batch size for testing (default: same as batch size)'
 
         # optimizer params
+        'optimizer': 'sgd',
+        'lovasz_hinge': True,
         'lr': None, # 'learning rate (default: auto)'
         'lr_scheduler': 'poly', # 'learning rate scheduler (default: poly)'
         'momentum': 0.9, # 'momentum (default: 0.9)'
@@ -63,7 +68,7 @@ def load_model_with_weights(model_name=None):
 
         # cuda, seed and logging
         'no_cuda': False, # 'disables CUDA training'
-        'seed': 1, # 'random seed (default: 1)'
+        'seed': 100, # 'random seed (default: 1)'
 
         # checking point
         'resume': None, # 'put the path to resuming file if needed'
@@ -78,7 +83,6 @@ def load_model_with_weights(model_name=None):
         'mode': 'testval',
         'ms': False, # 'multi scale & flip'
         'no_val': False, # 'skip validation during training'
-        'save-folder': 'experiments/segmentation/results', # 'path to save images'
     }
 
     model_args = ObjectView(options)
