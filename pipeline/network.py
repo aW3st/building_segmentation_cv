@@ -288,7 +288,13 @@ def get_model(args):
         args.lr = lrs[args.dataset.lower()] / 16 * args.batch_size
 
     torch.manual_seed(args.seed)
-    return EncNet(2, backbone=args.backbone, root='FastFCN/encoding/models',
+    
+    if args.use_lovasz:
+        num_class = 1
+    else:
+        num_class = 2
+
+    return EncNet(num_class, backbone=args.backbone, root='FastFCN/encoding/models',
                         dilated = args.dilated, lateral=args.lateral, jpu=args.jpu, aux=args.aux,
                         se_loss = args.se_loss, norm_layer = nn.BatchNorm2d,
                         base_size = args.base_size, crop_size=args.crop_size)

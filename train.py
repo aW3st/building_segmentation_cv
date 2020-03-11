@@ -108,7 +108,8 @@ def train_fastfcn_mod(
     if options is None:
         options = {
             'use_jaccard': True,
-            'early_stopping': False,
+            'use_lovasz': True,
+            'early_stopping': True,
             'validation': True,
             'model': 'encnet', # model name (default: encnet)
             'backbone': 'resnet50', # backbone name (default: resnet50)
@@ -175,7 +176,6 @@ def train_fastfcn_mod(
     # Compile modified FastFCN model.
     model = Network.get_model(model_args)
     model.to(device)
-
     # Optimizer
     params = [p for p in model.parameters() if p.requires_grad]
     
@@ -235,7 +235,7 @@ def train_fastfcn_mod(
 
             # forward + backward + optimize
             outputs = model(images)
-            
+
             if model_args.use_lovasz:
                 loss = criterion(outputs[0], masks)
             else:
@@ -272,10 +272,10 @@ def train_fastfcn_mod(
                         images.requires_grad=False
                         outputs = model(images)
 
-                        outputs = outputs.cpu().numpy().reshape(-1)
-                        masks = masks.cpu().numpy().reshape(-1)
+                        outputs = (outputs[0]>0).long().data
+                        masks = masks.to(device)
 
-                        loss = jaccard_score(masks, outputs)
+                        loss = L.iou_binary(outputs, masks)
                         assert type(loss) == float
                         val_loss += loss
                         
