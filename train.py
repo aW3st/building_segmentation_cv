@@ -169,7 +169,7 @@ def train_fastfcn_mod(
         )
     if model_args.validation:
         val_dataloader = get_dataloader(
-                in_dir=train_path, load_test=False, batch_size=batch_size//2, batch_trim=batch_trim, split='test'
+                in_dir=train_path, load_test=False, batch_size=4, batch_trim=batch_trim, split='test'
         )
 
     device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
@@ -197,7 +197,7 @@ def train_fastfcn_mod(
     if model_args.use_lovasz:
         # Loss Function (Lovasz Hinge)
         criterion = L.lovasz_hinge
-        
+
     else:
         # Loss Function (Segmentation Loss)
         criterion = Criterion.SegmentationLosses(
