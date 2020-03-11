@@ -14,8 +14,8 @@ import pipeline.criterion as Criterion
 from pipeline.load import get_dataloader
 import pipeline.network as Network
 from datetime import datetime, timedelta
-
-
+import FastFCN
+import pdb
 
 class ObjectView:
     '''
@@ -123,7 +123,7 @@ def train_fastfcn_mod(
             'aux_weight': 0.2, # 'Auxilary loss weight (default: 0.2)'
             'se_loss': True, # 'Semantic Encoding Loss SE-loss'
             'se_weight': 0.2, # 'SE-loss weight (default: 0.2)'
-            'epochs': None, # 'number of epochs to train (default: auto)'
+            'epochs': num_epochs, # 'number of epochs to train (default: auto)'
             'start_epoch': 0, # 'start epochs (default:0)'
             'batch_size': batch_size, # 'input batch size for training (default: auto)'
             'test_batch_size': None, # 'input batch size for testing (default: same as batch size)'
@@ -159,10 +159,11 @@ def train_fastfcn_mod(
     model_args = ObjectView(options)
     
     train_dataloader = get_dataloader(
-        in_dir=train_path, load_test=False, batch_size=batch_size//2, batch_trim=batch_trim, split='train'
+            in_dir=train_path, load_test=False, batch_size=batch_size, batch_trim=batch_trim, split='train'
         )
-    val_dataloader = get_dataloader(
-        in_dir=train_path, load_test=False, batch_size=batch_size//2, batch_trim=batch_trim, split='test'
+    if model_args.validation:
+        val_dataloader = get_dataloader(
+                in_dir=train_path, load_test=False, batch_size=batch_size//2, batch_trim=batch_trim, split='test'
         )
 
     device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
@@ -170,14 +171,21 @@ def train_fastfcn_mod(
     model = Network.get_model(model_args)
     model.to(device)
 
-    # Optimizer (Adam)
+    # Optimizer
     params = [p for p in model.parameters() if p.requires_grad]
-    optimizer = torch.optim.Adam(params, lr=0.0005, weight_decay=0.0005)
+    
+    # ADAM
+    #optimizer = torch.optim.Adam(params, lr=0.0005, weight_decay=0.0005)
+    
+    optimizer = torch.optim.SGD(params, lr=model_args.lr,
+                        momentum=model_args.momentum, weight_decay=model_args.weight_decay)
 
     # Larning rate scheduler
-    lr_scheduler = torch.optim.lr_scheduler.StepLR(
-        optimizer, step_size=2, gamma=0.5
-        )
+    # lr_scheduler = torch.optim.lr_scheduler.StepLR(
+    #    optimizer, step_size=2, gamma=0.5
+    #    )
+
+    lr_scheduler = FastFCN.encoding.utils.LR_Scheduler(model_args.lr_scheduler, model_args.lr, model_args.epochs, len(train_dataloader))
 
     # Loss Function (Segmentation Loss)
     criterion = Criterion.SegmentationLosses(
@@ -194,6 +202,7 @@ def train_fastfcn_mod(
     if model_args.early_stopping:
         early_stopper = EarlyStopping(patience=7, verbose=True)
 
+    best_pred = 0.0
     for epoch in range(num_epochs):  # loop over the dataset multiple times
 
         if model_args.early_stopping:
@@ -201,8 +210,11 @@ def train_fastfcn_mod(
                 break
 
         train_loss = 0.0
-
+        model.train()
+        
         for i, (images, targets, img_names) in enumerate(train_dataloader, 0):
+            
+            lr_scheduler(optimizer, i, epoch, best_pred)
             images = images.to(device)
             targets = targets.to(device).squeeze(1).round().long()
 
@@ -222,11 +234,11 @@ def train_fastfcn_mod(
             train_loss += loss.item()
 
             if i % reporting_int == 0:    # print every 2000 mini-batches
-                print('[%d, %5d] loss: %.3f' %
+                print('[%d, %5d] loss/batch: %.3f' %
                     (epoch + 1, i + 1, train_loss / reporting_int))
                 train_loss = 0.0
-
-            lr_scheduler.step()
+    
+        #lr_scheduler.step()
 
         # Calculation Validation Loss
 
@@ -237,6 +249,8 @@ def train_fastfcn_mod(
             with torch.no_grad():
                 model.eval()
                 val_loss = 0
+
+                val_len = 0
                 for i, (images, targets, img_names) in enumerate(val_dataloader):
                     images = images.to(device)
                     targets = targets.to(device).squeeze(1).round().long()
@@ -248,17 +262,23 @@ def train_fastfcn_mod(
                     outputs = model(images)
                     loss = criterion(*outputs, targets)
                     val_loss += loss.item()
-                
+                    val_len = i
+
                 # --- end of data iteration -------
-                print("Validation loss calculated:", val_loss)
+                print("Mean val loss per batch:", val_loss / val_len)
                 
+                if best_pred == 0:
+                    best_pred = val_loss
+                elif val_loss < best_pred:
+                    best_pred = val_loss
+
             if model_args.early_stopping:
                 # Check for early stopping conditions:
                 early_stopper(val_loss, model, experiment_name)
 
-
         # --- Save model if not using early stopping ----
         if not model_args.early_stopping:
+            
             save_model(model, experiment_name=experiment_name + '_chkpt')
             print('Checkpoint saved at epoch,', epoch+1)
 

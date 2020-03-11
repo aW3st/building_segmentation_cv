@@ -153,7 +153,7 @@ def train_transform(image, mask):
     Custom Pytorch randomized preprocessing of training image and mask.
     '''
     image = transforms.functional.pad(image, padding=0, padding_mode='reflect')
-    crop_size = 512
+    crop_size = 420
     crop_loc = np.random.randint(0, 1024 - crop_size, 2)
     image = transforms.functional.crop(image, *crop_loc, crop_size, crop_size)
     mask = transforms.functional.crop(mask, *crop_loc, crop_size, crop_size)
@@ -275,9 +275,11 @@ def get_dataloader(in_dir=None, load_test=False, batch_size=16, batch_trim=False
             return True
     
     print('Getting dataset.')
-    if split == 'train' or split == 'random':
+    if split == 'train' or split == 'random' or split == 'clean':
         custom_transforms = train_transform
     elif split == 'test':
+        custom_transforms = val_transform
+    else:
         custom_transforms = val_transform
     dataset = MyDataset(
         in_dir=in_dir, custom_transforms=custom_transforms,
