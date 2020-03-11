@@ -16,6 +16,8 @@ import pipeline.network as Network
 from datetime import datetime, timedelta
 import FastFCN
 import pdb
+from sklearn.metrics import jaccard_score
+import LovaszSoftmax.pytorch.lovasz_losses as L
 
 class ObjectView:
     '''
@@ -71,7 +73,7 @@ class EarlyStopping:
             self.save_checkpoint(val_loss, model, experiment_name)
         elif score < self.best_score + self.delta:
             self.counter += 1
-            print('Validaton Loss={}, best score = {}. \nEarlyStopping counter: {} out of {}'.format(score, self.bet_score, self.counter, self.patience))
+            print('Validaton Loss={}, best score = {}. \nEarlyStopping counter: {} out of {}'.format(score, self.best_score, self.counter, self.patience))
             if self.counter >= self.patience:
                 self.early_stop = True
         else:
@@ -105,6 +107,7 @@ def train_fastfcn_mod(
 
     if options is None:
         options = {
+            'use_jaccard': True,
             'early_stopping': False,
             'validation': True,
             'model': 'encnet', # model name (default: encnet)
@@ -129,6 +132,8 @@ def train_fastfcn_mod(
             'test_batch_size': None, # 'input batch size for testing (default: same as batch size)'
 
             # optimizer params
+            'optimizer': 'sgd',
+            'lovasz_hinge': True,
             'lr': None, # 'learning rate (default: auto)'
             'lr_scheduler': 'poly', # 'learning rate scheduler (default: poly)'
             'momentum': 0.9, # 'momentum (default: 0.9)'
@@ -174,30 +179,31 @@ def train_fastfcn_mod(
     # Optimizer
     params = [p for p in model.parameters() if p.requires_grad]
     
-    # ADAM
-    #optimizer = torch.optim.Adam(params, lr=0.0005, weight_decay=0.0005)
-    
-    optimizer = torch.optim.SGD(params, lr=model_args.lr,
-                        momentum=model_args.momentum, weight_decay=model_args.weight_decay)
+    if model_args.optimizer == 'adam':
+        # ADAM
+        optimizer = torch.optim.Adam(params, lr=0.0005, weight_decay=0.0005)
+    elif model_args.optimizer == 'sgd':
+        optimizer = torch.optim.SGD(params, lr=model_args.lr,
+                            momentum=model_args.momentum, weight_decay=model_args.weight_decay)
 
-    # Larning rate scheduler
+    # Learning rate scheduler
     # lr_scheduler = torch.optim.lr_scheduler.StepLR(
     #    optimizer, step_size=2, gamma=0.5
     #    )
 
     lr_scheduler = FastFCN.encoding.utils.LR_Scheduler(model_args.lr_scheduler, model_args.lr, model_args.epochs, len(train_dataloader))
 
-    # Loss Function (Segmentation Loss)
-    criterion = Criterion.SegmentationLosses(
-        se_loss=model_args.se_loss, aux=model_args.aux, nclass=2,
-        se_weight=model_args.se_weight, aux_weight=model_args.aux_weight
-        )
 
-    # # Loss Function (Lovasz Hinge)
-    # criterion = Criteron.SegmentationLosses(
-    #     se_loss=args.se_loss, aux=args.aux, nclass=2,
-    #     se_weight=args.se_weight, aux_weight=args.aux_weight
-    #     )
+    if model_args.use_lovasz:
+        # Loss Function (Lovasz Hinge)
+        criterion = L.lovasz_hinge
+    else:
+        # Loss Function (Segmentation Loss)
+        criterion = Criterion.SegmentationLosses(
+            se_loss=model_args.se_loss, aux=model_args.aux, nclass=2,
+            se_weight=model_args.se_weight, aux_weight=model_args.aux_weight
+            )
+
     
     if model_args.early_stopping:
         early_stopper = EarlyStopping(patience=7, verbose=True)
@@ -212,21 +218,28 @@ def train_fastfcn_mod(
         train_loss = 0.0
         model.train()
         
-        for i, (images, targets, img_names) in enumerate(train_dataloader, 0):
+        for i, (images, masks, _) in enumerate(train_dataloader, 0):
             
+            # Set learning rate first time
             lr_scheduler(optimizer, i, epoch, best_pred)
+
             images = images.to(device)
-            targets = targets.to(device).squeeze(1).round().long()
+            masks = masks.to(device).squeeze(1).round().long()
 
             # get the inputs; data is a list of [inputs, labels]
-            targets.requires_grad = False
+            masks.requires_grad = False
             
             # zero the parameter gradients
             optimizer.zero_grad()
 
             # forward + backward + optimize
             outputs = model(images)
-            loss = criterion(*outputs, targets)
+            
+            if model_args.use_lovasz:
+                loss = criterion(outputs[0], masks)
+            else:
+                loss = criterion(*outputs, masks)
+
             loss.backward()
             optimizer.step()
 
@@ -251,17 +264,33 @@ def train_fastfcn_mod(
                 val_loss = 0
 
                 val_len = 0
-                for i, (images, targets, img_names) in enumerate(val_dataloader):
-                    images = images.to(device)
-                    targets = targets.to(device).squeeze(1).round().long()
+                for i, (images, masks, _) in enumerate(val_dataloader):
+                    
+                    if model_args.use_jaccard:
+                        images = images.to(device)
+                        images.requires_grad=False
+                        outputs = model(images)
 
-                    # get the inputs; data is a list of [inputs, labels]
-                    images.requires_grad=False
-                    targets.requires_grad=False
+                        outputs = outputs.cpu().numpy().reshape(-1)
+                        masks = masks.cpu().numpy().reshape(-1)
 
-                    outputs = model(images)
-                    loss = criterion(*outputs, targets)
-                    val_loss += loss.item()
+                        loss = jaccard_score(masks, outputs)
+                        assert type(loss) == float
+                        val_loss += loss
+                        
+                    else:
+                        images = images.to(device)
+                        masks = masks.to(device).squeeze(1).round().long()
+                        
+                        # get the inputs; data is a list of [inputs, labels]
+                        images.requires_grad=False
+                        masks.requires_grad=False
+
+                        outputs = model(images)
+                        loss = criterion(*outputs, masks)
+                        
+                        val_loss += loss.item()
+
                     val_len = i
 
                 # --- end of data iteration -------
