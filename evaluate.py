@@ -28,14 +28,14 @@ def img_frombytes(data):
     databytes = np.packbits(data, axis=1)
     return Image.frombytes(mode='1', size=size, data=databytes)
 
-def load_model_with_weights(model_name=None):
+def load_model_with_weights(model_name=None, num_epochs=8, batch_size=16, use_lovasz=False):
     '''
     Load a model by name from the /models subdirectory.
     '''
 
     options = {
         'use_jaccard': True,
-        'use_lovasz': True,
+        'use_lovasz': use_lovasz,
         'early_stopping': False,
         'validation': True,
         'model': 'encnet', # model name (default: encnet)
@@ -54,10 +54,10 @@ def load_model_with_weights(model_name=None):
         'aux_weight': 0.2, # 'Auxilary loss weight (default: 0.2)'
         'se_loss': True, # 'Semantic Encoding Loss SE-loss'
         'se_weight': 0.2, # 'SE-loss weight (default: 0.2)'
-        'epochs': num_epochs, # 'number of epochs to train (default: auto)'
         'start_epoch': 0, # 'start epochs (default:0)'
         'batch_size': batch_size, # 'input batch size for training (default: auto)'
         'test_batch_size': None, # 'input batch size for testing (default: same as batch size)'
+        'epochs':num_epochs,
 
         # optimizer params
         'optimizer': 'sgd',
@@ -98,8 +98,10 @@ def load_model_with_weights(model_name=None):
     return model
 
 
-def output_to_pred_imgs(output, dim=0):
-
+def output_to_pred_imgs(output, dim=0, use_lovasz=False):
+    
+    if use_lovasz:
+        np_pred = (output[0]>0).squeeze().cpu()
     np_pred = torch.max(output, dim=dim)[1].cpu().numpy()
     return img_frombytes(np_pred)
 
@@ -129,7 +131,7 @@ def get_single_pred(model, img_name=None, img_path = None):
     return out_img
 
 
-def predict_test_set(model, model_name, overwrite=False):
+def predict_test_set(model, model_name, overwrite=False, use_lovasz=False):
     '''
     Predict for the entire submission set.
     '''
@@ -138,7 +140,7 @@ def predict_test_set(model, model_name, overwrite=False):
     if not os.path.exists(out_dir):
         os.makedirs(out_dir)
 
-    test_dataloader = get_dataloader(load_test=True, batch_size=8, overwrite=overwrite, out_dir=out_dir)
+    test_dataloader = get_dataloader(load_test=True, batch_size=4, overwrite=overwrite, out_dir=out_dir)
     if test_dataloader == False:
         print('Exiting...')
         sys.exit()
@@ -155,8 +157,8 @@ def predict_test_set(model, model_name, overwrite=False):
 
         # Predict on image tensors
         with torch.no_grad():
-            outputs = model(image_tensors)[2]
-            predict_imgs = [output_to_pred_imgs(output) for output in outputs]
+            outputs = model(image_tensors)[0]
+            predict_imgs = [output_to_pred_imgs(output,use_lovasz=use_lovasz) for output in outputs]
 
         # Zip images, and save.
         for predict_img, img_name in zip(predict_imgs, img_names):
@@ -175,7 +177,7 @@ def predict_custom(model, model_name, in_dir, overwrite=False):
         os.makedirs(out_dir+in_dir)
 
     test_dataloader = get_dataloader(
-        in_dir=in_dir, batch_size=8,
+        in_dir=in_dir, batch_size=4,
         overwrite=overwrite, out_dir=out_dir
         )
 
@@ -232,6 +234,9 @@ if __name__=='__main__':
         help='If True, write over existing images. \
                 Default behavior checks whether images \
                 exist in prediction directory.')
+    test_parser.add_argument(
+            '-use_lovasz', default=False, type=bool, required=False,
+            help='whether to use Lovasz Hinge Loss function.')
 
     custom_parser = subparsers.add_parser('custom', help=predict_custom.__doc__)
     custom_parser.add_argument(
@@ -245,9 +250,9 @@ if __name__=='__main__':
     custom_args = parser.parse_args()
 
     if custom_args.command == 'test':
-        MODEL = load_model_with_weights(model_name=custom_args.model_name)
+        MODEL = load_model_with_weights(model_name=custom_args.model_name, use_lovasz=custom_args.use_lovasz)
         MODEL.eval()
-        predict_test_set(model=MODEL, model_name=custom_args.model_name)
+        predict_test_set(model=MODEL, model_name=custom_args.model_name, use_lovasz=custom_args.use_lovasz)
     
     elif custom_args.command =='custom':
         MODEL = load_model_with_weights(model_name=custom_args.model_name)

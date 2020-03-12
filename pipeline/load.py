@@ -152,12 +152,8 @@ def train_transform(image, mask):
     '''
     Custom Pytorch randomized preprocessing of training image and mask.
     '''
-<<<<<<< HEAD
-    crop_size = 440
-=======
     image = transforms.functional.pad(image, padding=0, padding_mode='reflect')
-    crop_size = 512
->>>>>>> ee713a77ebef7feb38c69b529a2b5accc6a4446f
+    crop_size = 460
     crop_loc = np.random.randint(0, 1024 - crop_size, 2)
     image = transforms.functional.crop(image, *crop_loc, crop_size, crop_size)
     mask = transforms.functional.crop(mask, *crop_loc, crop_size, crop_size)
@@ -168,14 +164,8 @@ def train_transform(image, mask):
     return image, mask
 
 def val_transform(image, mask):
-<<<<<<< HEAD
-    image = transforms.functional.center_crop(image, 400)
-    mask = transforms.functional.center_crop(mask, 400)
-    # image = transforms.functional.pad(image, padding=3, fill=0, padding_mode='constant')
-=======
     image = transforms.functional.center_crop(image, 800)
     mask = transforms.functional.center_crop(mask, 800)
->>>>>>> ee713a77ebef7feb38c69b529a2b5accc6a4446f
     image = transforms.functional.to_tensor(image)
     mask = transforms.functional.to_tensor(mask)
     return image, mask

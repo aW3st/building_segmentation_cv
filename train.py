@@ -64,9 +64,12 @@ class EarlyStopping:
         self.val_loss_min = np.Inf
         self.delta = delta
 
-    def __call__(self, val_loss, model, experiment_name):
+    def __call__(self, val_loss, model, experiment_name, use_lovasz=False):
 
-        score = -val_loss
+        if use_lovasz:
+            score = val_loss
+        else:
+            score = -val_loss
 
         if self.best_score is None:
             self.best_score = score
@@ -109,11 +112,7 @@ def train_fastfcn_mod(
         options = {
             'use_jaccard': True,
             'use_lovasz': True,
-<<<<<<< HEAD
             'early_stopping': True,
-=======
-            'early_stopping': False,
->>>>>>> b3de0e6f73cd1bf541a84ddbcbe41311cb437613
             'validation': True,
             'model': 'encnet', # model name (default: encnet)
             'backbone': 'resnet50', # backbone name (default: resnet50)
@@ -127,9 +126,9 @@ def train_fastfcn_mod(
             'train_split':'train', # 'dataset train split (default: train)'
 
             # training hyper params
-            'aux': True, # 'Auxilary Loss'
+            'aux': False, # 'Auxilary Loss'
             'aux_weight': 0.2, # 'Auxilary loss weight (default: 0.2)'
-            'se_loss': True, # 'Semantic Encoding Loss SE-loss'
+            'se_loss': False, # 'Semantic Encoding Loss SE-loss'
             'se_weight': 0.2, # 'SE-loss weight (default: 0.2)'
             'epochs': num_epochs, # 'number of epochs to train (default: auto)'
             'start_epoch': 0, # 'start epochs (default:0)'
@@ -308,7 +307,7 @@ def train_fastfcn_mod(
 
             if model_args.early_stopping:
                 # Check for early stopping conditions:
-                early_stopper(val_loss, model, experiment_name)
+                early_stopper(val_loss, model, experiment_name, use_lovasz=model_args.use_lovasz)
 
         # --- Save model if not using early stopping ----
         if not model_args.early_stopping:
