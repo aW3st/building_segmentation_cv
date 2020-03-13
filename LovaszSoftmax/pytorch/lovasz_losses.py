@@ -49,8 +49,6 @@ def iou_binary(preds, labels, incl_bg=True, EMPTY=1., ignore=None, per_image=Tru
             union = 1024**2
         else:
             union = ((label == 1) | ((pred == 1) & (label != ignore))).sum()
-        
-            in
 
         if not union:
             iou = EMPTY
