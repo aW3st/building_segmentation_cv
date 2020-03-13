@@ -6,10 +6,12 @@ import sys,os
 from torchvision import transforms
 
 from tqdm import tqdm
+import pdb
 
 import pipeline.criterion as Criterion
 from pipeline.load import get_dataloader
 import pipeline.network as Network
+import LovaszSoftmax.pytorch.lovasz_losses as L
 
 import argparse
 
@@ -167,7 +169,7 @@ def predict_test_set(model, model_name, overwrite=False, use_lovasz=False):
 
     return None
 
-def predict_custom(model, model_name, in_dir, overwrite=Fals):
+def predict_custom(model, model_name, in_dir, overwrite=False):
     '''
     Predict for the entire submission set.
     '''
@@ -209,34 +211,53 @@ def predict_custom(model, model_name, in_dir, overwrite=Fals):
     return None
 
 
-def score_region(region):
+def score_region(model, model_name, region, thresh=0):
     '''
     evaluate and score for a single region. save results.
     '''
+
     test_dataloader = get_dataloader(
-        in_dir=in_dir, batch_size=8,
-        overwrite=overwrite, out_dir=out_dir, region=region
+        in_dir='training_data', batch_size=8, region=region
         )
     device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
     model.to(device)
 
     print('Beginning Prediction Loop')
+
+    region_loss = 0
+    losses = []
+
+    region_ct = 0
     tbar = tqdm(test_dataloader)
     for _, (images, targets, img_names) in enumerate(tbar):
-        
-        # Load tensors to GPU
-        images = images.to(device)
-        targets = targets.to(device).squeeze(1).round().long()
 
         # Predict on image tensors
         with torch.no_grad():
             outputs = model(images)[2]
             predict_imgs = [output_to_pred_imgs(output) for output in outputs]
 
-        # Zip images, and save.
-        for predict_img, img_name in zip(predict_imgs, img_names):
-            image_out_path = '{}/{}'.format(outdir, os.path.basename(img_name))
-            predict_img.save(image_out_path)
+            images = images.to(device)
+            images.requires_grad=False
+            outputs = model(images)
+
+            outputs = (outputs[0]>thresh).long().data
+            masks = masks.to(device)
+
+            for i, img_name in enumerate(np.array(img_names)):
+                loss = L.iou_binary(outputs[i], masks[i])
+                region_loss += loss
+                region_ct += 1
+                losses.append([model_name, img_name, loss])
+
+    losses.append([region + '_avg', region_loss / region_ct])
+
+    with open('regional_losses.txt', 'w') as file:
+        file.write(str([0,0,0]))
+        for loss_row in losses:
+            file.write(str(loss_row))
+        file.write(str([0,0,0]))
+
+    return None
 
 
 if __name__=='__main__':
@@ -277,6 +298,11 @@ if __name__=='__main__':
     custom_parser.add_argument(
             '-model_name', default=None, type=str, required=True,
             help='Name of model weights file in models directory')
+
+    regional_parser = subparsers.add_parser('region', help=score_region.__doc__)
+    regional_parser.add_argument(
+            '-model_name', default=None, type=str, required=True,
+            help='Name of model weights file in models directory')
     
     custom_args = parser.parse_args()
 
@@ -289,6 +315,13 @@ if __name__=='__main__':
         MODEL = load_model_with_weights(model_name=custom_args.model_name)
         MODEL.eval()
         predict_custom(model=MODEL, model_name=custom_args.model_name, in_dir=custom_args.in_dir)
+    
+    elif custom_args.command =='region':
+        MODEL = load_model_with_weights(model_name=custom_args.model_name)
+        MODEL.eval()
+
+        REGION = 'd41d81'
+        score_region(MODEL,custom_args.model_name, REGION)
 
     else:
         MODEL_NAME = '04-03-2020__Wed__03-04__five_epoch_single_region'
