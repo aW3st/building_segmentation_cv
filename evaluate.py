@@ -67,7 +67,7 @@ def img_frombytes(data):
     databytes = np.packbits(data, axis=1)
     return Image.frombytes(mode='1', size=size, data=databytes)
 
-def load_model_with_weights(model_name=None, num_epochs=8, batch_size=16, use_lovasz=False):
+def load_model_with_weights(model_name=None, num_epochs=8, batch_size=16, use_lovasz=False, se_loss=True, aux=True):
     '''
     Load a model by name from the /models subdirectory.
     '''
@@ -89,9 +89,9 @@ def load_model_with_weights(model_name=None, num_epochs=8, batch_size=16, use_lo
         'train_split':'train', # 'dataset train split (default: train)'
 
         # training hyper params
-        'aux': True, # 'Auxilary Loss'
+        'aux': aux, # 'Auxilary Loss'
         'aux_weight': 0.2, # 'Auxilary loss weight (default: 0.2)'
-        'se_loss': True, # 'Semantic Encoding Loss SE-loss'
+        'se_loss': se_loss, # 'Semantic Encoding Loss SE-loss'
         'se_weight': 0.2, # 'SE-loss weight (default: 0.2)'
         'start_epoch': 0, # 'start epochs (default:0)'
         'batch_size': batch_size, # 'input batch size for training (default: auto)'
@@ -262,21 +262,19 @@ def score_region(model, model_name, region, thresh=0):
     print('Beginning Prediction Loop')
 
     region_loss = 0
-    losses = []
+    losses = {'region': [],
+            'img_name': []
+            'loss': []
 
     region_ct = 0
     tbar = tqdm(test_dataloader)
-    for _, (images, targets, img_names) in enumerate(tbar):
+    for _, (images, masks, img_names) in enumerate(tbar):
 
         # Predict on image tensors
         with torch.no_grad():
-            outputs = model(images)[2]
-            predict_imgs = [output_to_pred_imgs(output) for output in outputs]
-
             images = images.to(device)
-            images.requires_grad=False
-            outputs = model(images)
 
+            outputs = model(images)
             outputs = (outputs[0]>thresh).long().data
             masks = masks.to(device)
 
@@ -286,13 +284,8 @@ def score_region(model, model_name, region, thresh=0):
                 region_ct += 1
                 losses.append([model_name, img_name, loss])
 
-    losses.append([region + '_avg', region_loss / region_ct])
+    losses([region + '_avg', region_loss / region_ct])
 
-    with open('regional_losses.txt', 'w') as file:
-        file.write(str([0,0,0]))
-        for loss_row in losses:
-            file.write(str(loss_row))
-        file.write(str([0,0,0]))
 
     return None
 
@@ -354,14 +347,11 @@ if __name__=='__main__':
         predict_custom(model=MODEL, model_name=custom_args.model_name, in_dir=custom_args.in_dir)
     
     elif custom_args.command =='region':
-        MODEL = load_model_with_weights(model_name=custom_args.model_name)
+        MODEL = load_model_with_weights(model_name=custom_args.model_name, use_lovasz=True, se_loss=False, aux=False)
         MODEL.eval()
-
-        with open('regional_losses.txt', 'w') as file:
-            for CITY in CITY_REGIONS.keys():
-                file.write(str([CITY,CITY,CITY]))
-                for REGION in CITY_REGIONS[CITY].keys():
-                    score_region(MODEL,custom_args.model_name, REGION)
+        for CITY in CITY_REGIONS.keys():
+            for REGION in CITY_REGIONS[CITY].keys():
+                writer.writerow(score_region(MODEL,custom_args.model_name, REGION))
 
     else:
         MODEL_NAME = '04-03-2020__Wed__03-04__five_epoch_single_region'
