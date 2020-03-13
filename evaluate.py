@@ -142,7 +142,8 @@ def output_to_pred_imgs(output, dim=0, use_lovasz=False):
     
     if use_lovasz:
         np_pred = (output[0]>0).squeeze().cpu()
-    np_pred = torch.max(output, dim=dim)[1].cpu().numpy()
+    else:
+        np_pred = torch.max(output, dim=dim)[1].cpu().numpy()
     return img_frombytes(np_pred)
 
 
@@ -171,7 +172,7 @@ def get_single_pred(model, img_name=None, img_path = None):
     return out_img
 
 
-def predict_test_set(model, model_name, overwrite=False, use_lovasz=False, ):
+def predict_test_set(model, model_name, overwrite=False, use_lovasz=False):
     '''
     Predict for the entire submission set.
     '''
@@ -197,7 +198,7 @@ def predict_test_set(model, model_name, overwrite=False, use_lovasz=False, ):
 
         # Predict on image tensors
         with torch.no_grad():
-            outputs = model(image_tensors)[0]
+            outputs = model(image_tensors)
             predict_imgs = [output_to_pred_imgs(output,use_lovasz=use_lovasz) for output in outputs]
 
         # Zip images, and save.
@@ -233,11 +234,9 @@ def predict_custom(model, model_name, in_dir, out_dir, overwrite=False):
         with torch.no_grad():
         # Load tensors to GPU
             images = images.to(device)
-            targets = targets.to(device).squeeze(1).round().long()
 
         # Predict on image tensors
-            outputs = model(images)[0]
-            predict_imgs = [output_to_pred_imgs(output) for output in outputs]
+            predict_imgs = [output_to_pred_imgs(output, use_lovasz=use_lovasz) for output in outputs]
 
         # Zip images, and save.
         for predict_img, img_name in zip(predict_imgs, img_names):
