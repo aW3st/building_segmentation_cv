@@ -142,7 +142,9 @@ def output_to_pred_imgs(output, dim=0, use_lovasz=False):
     
     if use_lovasz:
         np_pred = (output[0]>0).squeeze().cpu()
-    np_pred = torch.max(output, dim=dim)[1].cpu().numpy()
+    else:
+        np_pred = torch.max(output, dim=dim)[1].cpu().numpy()
+        
     return img_frombytes(np_pred)
 
 
@@ -171,7 +173,7 @@ def get_single_pred(model, img_name=None, img_path = None):
     return out_img
 
 
-def predict_test_set(model, model_name, overwrite=False, use_lovasz=False, ):
+def predict_test_set(model, model_name, overwrite=False, use_lovasz=False):
     '''
     Predict for the entire submission set.
     '''
