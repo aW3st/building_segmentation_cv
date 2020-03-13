@@ -165,7 +165,7 @@ def predict_test_set(model, model_name, overwrite=False):
 
     return None
 
-def predict_custom(model, model_name, in_dir, overwrite=False):
+def predict_custom(model, model_name, in_dir, overwrite=Fals):
     '''
     Predict for the entire submission set.
     '''
@@ -205,6 +205,37 @@ def predict_custom(model, model_name, in_dir, overwrite=False):
             predict_img.save(image_out_path)
 
     return None
+
+
+def score_region(region):
+    '''
+    evaluate and score for a single region. save results.
+    '''
+    test_dataloader = get_dataloader(
+        in_dir=in_dir, batch_size=8,
+        overwrite=overwrite, out_dir=out_dir, region=region
+        )
+    device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
+    model.to(device)
+
+    print('Beginning Prediction Loop')
+    tbar = tqdm(test_dataloader)
+    for _, (images, targets, img_names) in enumerate(tbar):
+        
+        # Load tensors to GPU
+        images = images.to(device)
+        targets = targets.to(device).squeeze(1).round().long()
+
+        # Predict on image tensors
+        with torch.no_grad():
+            outputs = model(images)[2]
+            predict_imgs = [output_to_pred_imgs(output) for output in outputs]
+
+        # Zip images, and save.
+        for predict_img, img_name in zip(predict_imgs, img_names):
+            image_out_path = '{}/{}'.format(outdir, os.path.basename(img_name))
+            predict_img.save(image_out_path)
+
 
 if __name__=='__main__':
     try:
