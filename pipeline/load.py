@@ -153,11 +153,12 @@ def train_transform(image, mask):
     Custom Pytorch randomized preprocessing of training image and mask.
     '''
     image = transforms.functional.pad(image, padding=0, padding_mode='reflect')
-    crop_size = 512
+    crop_size = 460
     crop_loc = np.random.randint(0, 1024 - crop_size, 2)
     image = transforms.functional.crop(image, *crop_loc, crop_size, crop_size)
     mask = transforms.functional.crop(mask, *crop_loc, crop_size, crop_size)
-    #image = colorjitter(image)
+    image = colorjitter(image)
+    # image = transforms.functional.pad(image, padding=3, fill=0, padding_mode='constant')
     image = transforms.functional.to_tensor(image)
     mask = transforms.functional.to_tensor(mask)
     return image, mask
