@@ -15,6 +15,43 @@ import LovaszSoftmax.pytorch.lovasz_losses as L
 
 import argparse
 
+CITY_REGIONS = {
+    'znz': {
+        '076995': 1701,
+        '75cdfa': 2304,
+        '425403': 1444,
+        '33cae6': 1106,
+        '06f252': 2387,
+        'e52478': 601,
+        'c7415c': 1346,
+        'bc32f1': 1521,
+        '3f8360': 1086,
+        'aee7fd': 1521,
+        '9b8638': 1482,
+        'bd5c14': 1369,
+        '3b20d4': 1849},
+    'dar': {
+        '353093': 1364,
+        'f883a0': 4094,
+        '0a4c40': 1604,
+        '42f235': 2257,
+        'a017f9': 1642,
+        'b15fce': 1395},
+    'acc': {
+        '665946': 6982,
+        'a42435': 1318,
+        'ca041a': 1566,
+        'd41d81': 737},
+    'ptn': {'abe1a3': 31, 'f49f31': 13},
+    'kam': {'4e7c7f': 868},
+    'mon': {
+        '401175': 192,
+        '493701': 280,
+        'f15272': 205,
+        '207cc7': 126},
+    'nia': {'825a50': 65}
+    }
+
 class ObjectView:
     '''
     Helper class to access dict values as attributes.
@@ -320,8 +357,11 @@ if __name__=='__main__':
         MODEL = load_model_with_weights(model_name=custom_args.model_name)
         MODEL.eval()
 
-        REGION = 'd41d81'
-        score_region(MODEL,custom_args.model_name, REGION)
+        with open('regional_losses.txt', 'w') as file:
+            for CITY in CITY_REGIONS.keys():
+                file.write(str([CITY,CITY,CITY]))
+                for REGION in CITY_REGIONS[CITY].keys():
+                    score_region(MODEL,custom_args.model_name, REGION)
 
     else:
         MODEL_NAME = '04-03-2020__Wed__03-04__five_epoch_single_region'
