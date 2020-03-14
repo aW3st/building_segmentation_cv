@@ -141,9 +141,10 @@ def load_model_with_weights(model_name=None, num_epochs=8, batch_size=16, use_lo
 def output_to_pred_imgs(output, dim=0, use_lovasz=False):
     
     if use_lovasz:
-        np_pred = (output[0]>0).squeeze().cpu()
+        np_pred = (output>0).squeeze().cpu().numpy()
     else:
         np_pred = torch.max(output, dim=dim)[1].cpu().numpy()
+    
     return img_frombytes(np_pred)
 
 
@@ -198,7 +199,7 @@ def predict_test_set(model, model_name, overwrite=False, use_lovasz=False):
 
         # Predict on image tensors
         with torch.no_grad():
-            outputs = model(image_tensors)
+            outputs = model(image_tensors)[0]
             predict_imgs = [output_to_pred_imgs(output,use_lovasz=use_lovasz) for output in outputs]
 
         # Zip images, and save.

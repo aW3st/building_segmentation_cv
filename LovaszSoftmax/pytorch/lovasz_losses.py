@@ -9,6 +9,8 @@ import torch
 from torch.autograd import Variable
 import torch.nn.functional as F
 import numpy as np
+import pdb
+
 try:
     from itertools import  ifilterfalse
 except ImportError: # py3k
@@ -54,6 +56,7 @@ def iou_binary(preds, labels, incl_bg=True, EMPTY=1., ignore=None, per_image=Tru
             iou = EMPTY
         else:
             iou = float(intersection) / float(union)
+
         ious.append(iou)
     iou = mean(ious)    # mean accross images if per_image
     return 100 * iou
