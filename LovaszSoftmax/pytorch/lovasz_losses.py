@@ -9,6 +9,8 @@ import torch
 from torch.autograd import Variable
 import torch.nn.functional as F
 import numpy as np
+import pdb
+
 try:
     from itertools import  ifilterfalse
 except ImportError: # py3k
@@ -30,7 +32,7 @@ def lovasz_grad(gt_sorted):
     return jaccard
 
 
-def iou_binary(preds, labels, EMPTY=1., ignore=None, per_image=True):
+def iou_binary(preds, labels, incl_bg=True, EMPTY=1., ignore=None, per_image=True):
     """
     IoU for foreground class
     binary: 1 foreground, 0 background
@@ -39,12 +41,22 @@ def iou_binary(preds, labels, EMPTY=1., ignore=None, per_image=True):
         preds, labels = (preds,), (labels,)
     ious = []
     for pred, label in zip(preds, labels):
-        intersection = ((label == 1) & (pred == 1)).sum()
-        union = ((label == 1) | ((pred == 1) & (label != ignore))).sum()
+
+        if incl_bg:
+            intersection = ((label == pred)).sum()
+        else:
+            intersection = ((label == 1) & (pred == 1)).sum()
+    
+        if incl_bg:
+            union = 1024**2
+        else:
+            union = ((label == 1) | ((pred == 1) & (label != ignore))).sum()
+
         if not union:
             iou = EMPTY
         else:
             iou = float(intersection) / float(union)
+
         ious.append(iou)
     iou = mean(ious)    # mean accross images if per_image
     return 100 * iou

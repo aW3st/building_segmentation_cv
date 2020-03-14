@@ -170,6 +170,9 @@ def val_transform(image, mask):
     mask = transforms.functional.to_tensor(mask)
     return image, mask
 
+def identity_transform(image, mask):
+    return image, mask
+
 # ---- Dataset Class ----
 class DatasetWrapper(Dataset):
     def __init__(self, subset, transform=None):
@@ -189,7 +192,7 @@ class MyDataset(Dataset):
     '''
     Custom PyTorch Dataset class.
     '''
-    def __init__(self, in_dir=None, custom_transforms=None, load_test=False, split=None, batch_trim=False, compressed=False):
+    def __init__(self, in_dir=None, custom_transforms=None, load_test=False, split=None, batch_trim=False, compressed=False, region=None):
 
         self.transforms = custom_transforms
         self.load_test = load_test
@@ -221,6 +224,12 @@ class MyDataset(Dataset):
             elif split =='clean' or split == 'train' or split == 'test':
                 self.basenames = [os.path.basename(g) for g in self.images if is_valid_loc(g, split)]
             
+
+            if region is not None:
+                sample_ct = 100
+                self.basenames = [b for b in self.basenames if region in b]
+                self.basenames = np.random.choice(self.basenames, size=sample_ct)
+
 
             self.images = []
             self.masks = []
@@ -264,7 +273,7 @@ class MyDataset(Dataset):
 
 # ---- Load Dataset ----
 
-def get_dataloader(in_dir=None, load_test=False, batch_size=16, batch_trim=False, overwrite=False, out_dir=None, split=None):
+def get_dataloader(in_dir=None, load_test=False, batch_size=16, batch_trim=False, overwrite=False, out_dir=None, split=None, region=None):
     '''
     Load pytorch batch data loader only
     '''
@@ -284,7 +293,7 @@ def get_dataloader(in_dir=None, load_test=False, batch_size=16, batch_trim=False
     else:
         custom_transforms = val_transform
     dataset = MyDataset(
-        in_dir=in_dir, custom_transforms=custom_transforms,
+        in_dir=in_dir, custom_transforms=custom_transforms, region=region,
         load_test=load_test, batch_trim=batch_trim, split=split
         )
     
