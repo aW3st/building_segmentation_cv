@@ -57,7 +57,6 @@ class LR_Scheduler(object):
                 previous best = %.4f' % (epoch, lr, best_pred))
             self.epoch = epoch
         assert lr >= 0
-        self._adjust_learning_rate(optimizer, lr)
 
     def _adjust_learning_rate(self, optimizer, lr):
         if len(optimizer.param_groups) == 1:
@@ -66,4 +65,4 @@ class LR_Scheduler(object):
             # enlarge the lr at the head
             optimizer.param_groups[0]['lr'] = lr
             for i in range(1, len(optimizer.param_groups)):
-                optimizer.param_groups[i]['lr'] = lr * 10
+                optimizer.param_groups[i]['lr'] = lr/i
