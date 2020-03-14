@@ -200,7 +200,7 @@ class MyDataset(Dataset):
 
         if in_dir is None:
             in_dir = 'training_data'
-            print(f'Pulling from directory {in_dir}')
+            print('Pulling from directory {}'.format(in_dir))
         
         if self.load_test:
             print('Loading Test')
@@ -223,6 +223,7 @@ class MyDataset(Dataset):
 
             elif split =='clean' or split == 'train' or split == 'test':
                 self.basenames = [os.path.basename(g) for g in self.images if is_valid_loc(g, split)]
+            
 
             if region is not None:
                 sample_ct = 100
