@@ -170,6 +170,9 @@ def val_transform(image, mask):
     mask = transforms.functional.to_tensor(mask)
     return image, mask
 
+def identity_transform(image, mask):
+    return image, mask
+
 # ---- Dataset Class ----
 class DatasetWrapper(Dataset):
     def __init__(self, subset, transform=None):

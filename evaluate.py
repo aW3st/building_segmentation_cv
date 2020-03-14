@@ -190,6 +190,8 @@ def predict_test_set(model, model_name, overwrite=False, use_lovasz=False):
     device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
     model.to(device)
 
+    model.eval()
+
     print('Beginning Prediction Loop')
     tbar = tqdm(test_dataloader)
     for _, (image_tensors, img_names) in enumerate(tbar):        
@@ -217,7 +219,7 @@ def predict_custom(model, model_name, in_dir, out_dir, overwrite=False):
         out_dir = 'models/{}/validation_samples'.format(model_name)
 
     test_dataloader = get_dataloader(
-        in_dir=in_dir, batch_size=8,
+        in_dir=in_dir, batch_size=4, 
         overwrite=overwrite, out_dir=out_dir
         )
 
@@ -228,6 +230,11 @@ def predict_custom(model, model_name, in_dir, out_dir, overwrite=False):
     device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
     model.to(device)
 
+    model.eval()
+
+    if not os.path.exists('{}/{}'.format(out_dir, model_name)):
+        os.makedirs(image_out_path)
+
     print('Beginning Prediction Loop')
     tbar = tqdm(test_dataloader)
     for _, (images, targets, img_names) in enumerate(tbar):
@@ -236,12 +243,16 @@ def predict_custom(model, model_name, in_dir, out_dir, overwrite=False):
         # Load tensors to GPU
             images = images.to(device)
 
+            outputs = model(image_tensors)[0]
         # Predict on image tensors
             predict_imgs = [output_to_pred_imgs(output, use_lovasz=use_lovasz) for output in outputs]
 
         # Zip images, and save.
+        
         for predict_img, img_name in zip(predict_imgs, img_names):
-            image_out_path = '{}/{}'.format(out_dir, os.path.basename(img_name))
+            image_out_path = '{}/{}/{}.tif'.format(out_dir, model_name, os.path.basename(img_name))
+            
+            
             predict_img.save(image_out_path)
 
     return None
@@ -348,8 +359,8 @@ if __name__=='__main__':
     elif custom_args.command =='custom':
         MODEL = load_model_with_weights(model_name=custom_args.model_name)
         MODEL.eval()
-        predict_custom(model=MODEL, model_name=custom_args.model_name, in_dir=custom_args.in_dir, 
-                out_dir=custom_args.out_dir)
+        predict_custom(model=MODEL, model_name='11-03-2020_12-11__full_lovasz_trial_chkpt', in_dir=custom_args.in_dir, 
+                out_dir='training_data')
     
     elif custom_args.command =='region':
         MODEL = load_model_with_weights(model_name=custom_args.model_name, use_lovasz=True, se_loss=False, aux=False)
