@@ -28,6 +28,11 @@ class ObjectView:
     def __init__(self, d):
         self.__dict__ = d
 
+def layer_gen(model):
+    yield from reversed(list(model.pretrained.layer4.children()))
+    yield from reversed(list(model.pretrained.layer3.children()))
+    yield from reversed(list(model.pretrained.layer2.children()))
+    yield from reversed(list(model.pretrained.layer1.children()))
 
 def save_model(model, experiment_name=None):
     '''
@@ -138,7 +143,7 @@ def train_fastfcn_mod(
             # optimizer params
             'optimizer': 'sgd',
             'lovasz_hinge': True,
-            'lr': None, # 'learning rate (default: auto)'
+            'lr': 0.01, # 'learning rate (default: auto)'
             'lr_scheduler': 'poly', # 'learning rate scheduler (default: poly)'
             'momentum': 0.9, # 'momentum (default: 0.9)'
             'weight_decay': 1e-4, # 'w-decay (default: 1e-4)'
@@ -170,6 +175,7 @@ def train_fastfcn_mod(
     train_dataloader = get_dataloader(
             in_dir=train_path, load_test=False, batch_size=batch_size, batch_trim=batch_trim, split='train'
         )
+
     if model_args.validation:
         val_dataloader = get_dataloader(
                 in_dir=train_path, load_test=False, batch_size=4, batch_trim=batch_trim, split='test'
@@ -194,7 +200,8 @@ def train_fastfcn_mod(
     #    optimizer, step_size=2, gamma=0.5
     #    )
 
-    lr_scheduler = FastFCN.encoding.utils.LR_Scheduler(model_args.lr_scheduler, model_args.lr, model_args.epochs, len(train_dataloader))
+    lr_scheduler = FastFCN.encoding.utils.LR_Scheduler(model_args.lr_scheduler, model_args.lr, 
+            model_args.epochs, len(train_dataloader))
 
 
     if model_args.use_lovasz:
@@ -208,12 +215,22 @@ def train_fastfcn_mod(
             se_weight=model_args.se_weight, aux_weight=model_args.aux_weight
             )
 
-    
     if model_args.early_stopping:
-        early_stopper = EarlyStopping(patience=7, verbose=True)
+        early_stopper = EarlyStopping(patience=10, verbose=True)
 
+    bottom_up_layers = layer_gen(model)
+
+    
     best_pred = 0.0
     for epoch in range(num_epochs):  # loop over the dataset multiple times
+
+        if epoch>0:
+            unfreeze_layer = next(bottom_up_layers)
+            grp = {'params': unfreeze_layer.parameters()}
+            optimizer.add_param_group(grp)
+
+
+    
 
         if model_args.early_stopping:
             if early_stopper.early_stop:
