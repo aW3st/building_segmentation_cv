@@ -99,7 +99,7 @@ class EarlyStopping:
 
 def train_fastfcn_mod(
     options=None, num_epochs=1, reporting_int=5, batch_size=8,
-    experiment_name=None, train_path=None, batch_trim=None
+    experiment_name=None, train_path=None, batch_trim=None, tier2=None
     ):
     '''
     Compile and train the modified FastFCN implementation.
@@ -179,12 +179,13 @@ def train_fastfcn_mod(
 
     if model_args.validation:
         val_dataloader = get_dataloader(
-                in_dir=train_path, load_test=False, batch_size=4, batch_trim=batch_trim, split='test'
+                in_dir=train_path, load_test=False, batch_size=16, batch_trim=batch_trim, split='test'
         )
 
     device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
     # Compile modified FastFCN model.
     model = Network.get_model(model_args)
+    model.load_state_dict(torch.load('models/14-03-2020_10-49__unfreezing_layers_gen_chkpt/14-03-2020_10-49__unfreezing_layers_gen_chkpt_m.pt'))
     model.to(device)
     # Optimizer
     params = [p for p in model.parameters() if p.requires_grad]
@@ -226,12 +227,13 @@ def train_fastfcn_mod(
     for epoch in range(num_epochs):  # loop over the dataset multiple times
 
         if epoch>0:
-            unfreeze_layer = next(bottom_up_layers)
-            grp = {'params': unfreeze_layer.parameters()}
-            optimizer.add_param_group(grp)
-
-
-    
+            try:
+                unfreeze_layer = next(bottom_up_layers)
+                unfreeze_layer.requires_grad_()
+                grp = {'params': unfreeze_layer.parameters()}
+                optimizer.add_param_group(grp)
+            except:
+                pass    
 
         if model_args.early_stopping:
             if early_stopper.early_stop:

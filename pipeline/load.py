@@ -1,5 +1,5 @@
 
-
+import pdb
 import glob
 import os
 import re
@@ -152,16 +152,16 @@ def train_transform(image, mask):
     '''
     Custom Pytorch randomized preprocessing of training image and mask.
     '''
-    image = transforms.functional.pad(image, padding=0, padding_mode='reflect')
+    image = transforms.functional.pad(image, padding=3, padding_mode='reflect')
     crop_size = 460
     crop_loc = np.random.randint(0, 1024 - crop_size, 2)
     image = transforms.functional.crop(image, *crop_loc, crop_size, crop_size)
     mask = transforms.functional.crop(mask, *crop_loc, crop_size, crop_size)
 
 
-    rot_angle = np.random.choice([0,90,180,270])
-    image = transforms.functional.rotate(image, rot_angle)
-    mask = transforms.functional.rotate(mask, rot_angle)
+    #rot_angle = np.random.choice([0,90,180,270])
+    #image = transforms.functional.rotate(image, rot_angle)
+    #mask = transforms.functional.rotate(mask, rot_angle)
 
     image = colorjitter(image)
     # image = transforms.functional.pad(image, padding=3, fill=0, padding_mode='constant')
@@ -321,7 +321,7 @@ def get_dataloader(in_dir=None, load_test=False, batch_size=16, batch_trim=False
         val_dataset = DatasetWrapper(val_subset, transform=val_transform)
         train_dataset = DatasetWrapper(train_subset, transform=train_transform)
         train_loader = DataLoader(train_dataset, shuffle=True, batch_size=batch_size, pin_memory=True,num_workers=3)
-        val_loader = DataLoader(val_dataset, shuffle=False, batch_size=batch_size//4, pin_memory=True, num_workers=3)
+        val_loader = DataLoader(val_dataset, shuffle=False, batch_size=batch_size, pin_memory=True, num_workers=3)
         return train_loader, val_loader
     else:
         return DataLoader(
