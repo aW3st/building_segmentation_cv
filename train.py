@@ -131,7 +131,7 @@ def train_fastfcn_mod(
             'train_split':'train', # 'dataset train split (default: train)'
 
             # training hyper params
-            'aux': False, # 'Auxilary Loss'
+            'aux': False, # 'Auxilary Loss'e
             'aux_weight': 0.2, # 'Auxilary loss weight (default: 0.2)'
             'se_loss': False, # 'Semantic Encoding Loss SE-loss'
             'se_weight': 0.2, # 'SE-loss weight (default: 0.2)'
@@ -173,7 +173,8 @@ def train_fastfcn_mod(
     model_args = ObjectView(options)
     
     train_dataloader = get_dataloader(
-            in_dir=train_path, load_test=False, batch_size=batch_size, batch_trim=batch_trim, split='train'
+            in_dir=train_path, load_test=False, batch_size=batch_size, batch_trim=batch_trim, split='train', 
+            tier2=tier2
         )
 
     if model_args.validation:
@@ -367,6 +368,9 @@ if __name__=='__main__':
     TRAIN_PARSER.add_argument(
         '-batch_trim', default=None, type=int, required=False,
         help='Option to only train for a limit number of batches in each epoch.')
+    TRAIN_PARSER.add_argument(
+        '-tier2', default=None, type=bool, required=False,
+        help='whether or not to train on tier 2 data')
 
     PARSED_ARGS = PARSER.parse_args()
     print('Args:\n', PARSED_ARGS)
@@ -375,5 +379,6 @@ if __name__=='__main__':
         train_fastfcn_mod(
             num_epochs=PARSED_ARGS.epochs, reporting_int=PARSED_ARGS.report,
             batch_size=PARSED_ARGS.batch_size, experiment_name=PARSED_ARGS.name,
-            train_path=PARSED_ARGS.train_path, batch_trim=PARSED_ARGS.batch_trim
+            train_path=PARSED_ARGS.train_path, batch_trim=PARSED_ARGS.batch_trim, 
+            tier2= PARSED_ARGS.tier2
             )
