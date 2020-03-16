@@ -28,11 +28,6 @@ class ObjectView:
     def __init__(self, d):
         self.__dict__ = d
 
-def layer_gen(model):
-    yield from reversed(list(model.pretrained.layer4.children()))
-    yield from reversed(list(model.pretrained.layer3.children()))
-    yield from reversed(list(model.pretrained.layer2.children()))
-    yield from reversed(list(model.pretrained.layer1.children()))
 
 def save_model(model, experiment_name=None):
     '''
@@ -69,12 +64,9 @@ class EarlyStopping:
         self.val_loss_min = np.Inf
         self.delta = delta
 
-    def __call__(self, val_loss, model, experiment_name, use_lovasz=False):
+    def __call__(self, val_loss, model, experiment_name):
 
-        if use_lovasz:
-            score = val_loss
-        else:
-            score = -val_loss
+        score = -val_loss
 
         if self.best_score is None:
             self.best_score = score
@@ -116,8 +108,7 @@ def train_fastfcn_mod(
     if options is None:
         options = {
             'use_jaccard': True,
-            'use_lovasz': True,
-            'early_stopping': True,
+            'early_stopping': False,
             'validation': True,
             'model': 'encnet', # model name (default: encnet)
             'backbone': 'resnet50', # backbone name (default: resnet50)
@@ -131,9 +122,9 @@ def train_fastfcn_mod(
             'train_split':'train', # 'dataset train split (default: train)'
 
             # training hyper params
-            'aux': False, # 'Auxilary Loss'e
+            'aux': True, # 'Auxilary Loss'
             'aux_weight': 0.2, # 'Auxilary loss weight (default: 0.2)'
-            'se_loss': False, # 'Semantic Encoding Loss SE-loss'
+            'se_loss': True, # 'Semantic Encoding Loss SE-loss'
             'se_weight': 0.2, # 'SE-loss weight (default: 0.2)'
             'epochs': num_epochs, # 'number of epochs to train (default: auto)'
             'start_epoch': 0, # 'start epochs (default:0)'
@@ -143,7 +134,7 @@ def train_fastfcn_mod(
             # optimizer params
             'optimizer': 'sgd',
             'lovasz_hinge': True,
-            'lr': 0.01, # 'learning rate (default: auto)'
+            'lr': None, # 'learning rate (default: auto)'
             'lr_scheduler': 'poly', # 'learning rate scheduler (default: poly)'
             'momentum': 0.9, # 'momentum (default: 0.9)'
             'weight_decay': 1e-4, # 'w-decay (default: 1e-4)'
@@ -173,19 +164,18 @@ def train_fastfcn_mod(
     model_args = ObjectView(options)
     
     train_dataloader = get_dataloader(
-            in_dir=train_path, load_test=False, batch_size=batch_size, batch_trim=batch_trim, split='train', 
-            tier2=tier2
+            in_dir=train_path, load_test=False, batch_size=batch_size, batch_trim=batch_trim, split='train'
         )
-
     if model_args.validation:
         val_dataloader = get_dataloader(
-                in_dir=train_path, load_test=False, batch_size=4, batch_trim=batch_trim, split='test'
+                in_dir=train_path, load_test=False, batch_size=batch_size//2, batch_trim=batch_trim, split='test'
         )
 
     device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
     # Compile modified FastFCN model.
     model = Network.get_model(model_args)
     model.to(device)
+
     # Optimizer
     params = [p for p in model.parameters() if p.requires_grad]
     
@@ -201,14 +191,13 @@ def train_fastfcn_mod(
     #    optimizer, step_size=2, gamma=0.5
     #    )
 
-    lr_scheduler = FastFCN.encoding.utils.LR_Scheduler(model_args.lr_scheduler, model_args.lr, 
-            model_args.epochs, len(train_dataloader))
+    lr_scheduler = FastFCN.encoding.utils.LR_Scheduler(model_args.lr_scheduler, model_args.lr, model_args.epochs, len(train_dataloader))
 
 
     if model_args.use_lovasz:
         # Loss Function (Lovasz Hinge)
         criterion = L.lovasz_hinge
-
+        
     else:
         # Loss Function (Segmentation Loss)
         criterion = Criterion.SegmentationLosses(
@@ -216,22 +205,12 @@ def train_fastfcn_mod(
             se_weight=model_args.se_weight, aux_weight=model_args.aux_weight
             )
 
-    if model_args.early_stopping:
-        early_stopper = EarlyStopping(patience=10, verbose=True)
-
-    bottom_up_layers = layer_gen(model)
-
     
+    if model_args.early_stopping:
+        early_stopper = EarlyStopping(patience=7, verbose=True)
+
     best_pred = 0.0
     for epoch in range(num_epochs):  # loop over the dataset multiple times
-
-        if epoch>0:
-            unfreeze_layer = next(bottom_up_layers)
-            grp = {'params': unfreeze_layer.parameters()}
-            optimizer.add_param_group(grp)
-
-
-    
 
         if model_args.early_stopping:
             if early_stopper.early_stop:
@@ -256,7 +235,7 @@ def train_fastfcn_mod(
 
             # forward + backward + optimize
             outputs = model(images)
-
+            
             if model_args.use_lovasz:
                 loss = criterion(outputs[0], masks)
             else:
@@ -293,10 +272,10 @@ def train_fastfcn_mod(
                         images.requires_grad=False
                         outputs = model(images)
 
-                        outputs = (outputs[0]>0).long().data
-                        masks = masks.to(device)
+                        outputs = outputs.cpu().numpy().reshape(-1)
+                        masks = masks.cpu().numpy().reshape(-1)
 
-                        loss = L.iou_binary(outputs, masks)
+                        loss = jaccard_score(masks, outputs)
                         assert type(loss) == float
                         val_loss += loss
                         
@@ -325,7 +304,7 @@ def train_fastfcn_mod(
 
             if model_args.early_stopping:
                 # Check for early stopping conditions:
-                early_stopper(val_loss, model, experiment_name, use_lovasz=model_args.use_lovasz)
+                early_stopper(val_loss, model, experiment_name)
 
         # --- Save model if not using early stopping ----
         if not model_args.early_stopping:
@@ -368,9 +347,6 @@ if __name__=='__main__':
     TRAIN_PARSER.add_argument(
         '-batch_trim', default=None, type=int, required=False,
         help='Option to only train for a limit number of batches in each epoch.')
-    TRAIN_PARSER.add_argument(
-        '-tier2', default=None, type=bool, required=False,
-        help='whether or not to train on tier 2 data')
 
     PARSED_ARGS = PARSER.parse_args()
     print('Args:\n', PARSED_ARGS)
@@ -379,6 +355,5 @@ if __name__=='__main__':
         train_fastfcn_mod(
             num_epochs=PARSED_ARGS.epochs, reporting_int=PARSED_ARGS.report,
             batch_size=PARSED_ARGS.batch_size, experiment_name=PARSED_ARGS.name,
-            train_path=PARSED_ARGS.train_path, batch_trim=PARSED_ARGS.batch_trim, 
-            tier2= PARSED_ARGS.tier2
+            train_path=PARSED_ARGS.train_path, batch_trim=PARSED_ARGS.batch_trim
             )

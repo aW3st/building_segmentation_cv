@@ -58,7 +58,6 @@ def is_valid_loc(basename, split):
     '''
     Filter basenames according to allowed regions.
     '''
-    basename = os.path.basename(basename)
     region, x_pos, y_pos, ext = basename.split('_')
 
     train_regions = {
@@ -153,30 +152,20 @@ def train_transform(image, mask):
     Custom Pytorch randomized preprocessing of training image and mask.
     '''
     image = transforms.functional.pad(image, padding=0, padding_mode='reflect')
-    crop_size = 460
+    crop_size = 512
     crop_loc = np.random.randint(0, 1024 - crop_size, 2)
     image = transforms.functional.crop(image, *crop_loc, crop_size, crop_size)
     mask = transforms.functional.crop(mask, *crop_loc, crop_size, crop_size)
-
-
-    rot_angle = np.random.choice([0,90,180,270])
-    image = transforms.functional.rotate(image, rot_angle)
-    mask = transforms.functional.rotate(mask, rot_angle)
-
-    image = colorjitter(image)
-    # image = transforms.functional.pad(image, padding=3, fill=0, padding_mode='constant')
+    #image = colorjitter(image)
     image = transforms.functional.to_tensor(image)
     mask = transforms.functional.to_tensor(mask)
     return image, mask
 
 def val_transform(image, mask):
-    image = transforms.functional.center_crop(image, 500)
-    mask = transforms.functional.center_crop(mask, 500)
+    image = transforms.functional.center_crop(image, 400)
+    mask = transforms.functional.center_crop(mask, 400)
     image = transforms.functional.to_tensor(image)
     mask = transforms.functional.to_tensor(mask)
-    return image, mask
-
-def identity_transform(image, mask):
     return image, mask
 
 # ---- Dataset Class ----
@@ -198,16 +187,15 @@ class MyDataset(Dataset):
     '''
     Custom PyTorch Dataset class.
     '''
-    def __init__(self, in_dir=None, custom_transforms=None, load_test=False, split=None, batch_trim=False, compressed=False, region=None, tier2=False):
+    def __init__(self, in_dir=None, custom_transforms=None, load_test=False, split=None, batch_trim=False, compressed=False):
 
         self.transforms = custom_transforms
         self.load_test = load_test
         self.compressed = compressed
-        self.tier2 = tier2
 
         if in_dir is None:
             in_dir = 'training_data'
-            print('Pulling from directory {}'.format(in_dir))
+            print(f'Pulling from directory {in_dir}')
         
         if self.load_test:
             print('Loading Test')
@@ -220,7 +208,9 @@ class MyDataset(Dataset):
 
         else:
             self.path = in_dir
+            print(self.path)
             pattern = os.path.join(self.path, 'images', '*.jpg')
+            print(pattern)
             self.images = glob.glob(pattern)
 
             if split is None:
@@ -228,13 +218,6 @@ class MyDataset(Dataset):
 
             elif split =='clean' or split == 'train' or split == 'test':
                 self.basenames = [os.path.basename(g) for g in self.images if is_valid_loc(g, split)]
-            
-
-            if region is not None:
-                sample_ct = 100
-                self.basenames = [b for b in self.basenames if region in b]
-                self.basenames = np.random.choice(self.basenames, size=sample_ct)
-
 
             self.images = []
             self.masks = []
@@ -244,16 +227,6 @@ class MyDataset(Dataset):
                 if (os.path.exists(img) and os.path.exists(mask)):
                     self.images.append(img)
                     self.masks.append(mask)
-            if self.tier2:
-                pattern = os.path.join(self.path, 'tier2', 'images', '*.jpg')
-                images = glob.glob(pattern)
-                basenames = [os.path.basename(g) for g in images]
-                for basename in basenames:
-                    img= os.path.join(self.path, 'tier2', 'images', basename)
-                    mask = os.path.join(self.path, 'tier2', 'pseudolabels', basename)
-                    if (os.path.exists(img) and os.path.exists(mask)):
-                        self.images.append(img)
-                        self.masks.append(mask)
 
             self.coordinates = None
         
@@ -288,7 +261,7 @@ class MyDataset(Dataset):
 
 # ---- Load Dataset ----
 
-def get_dataloader(in_dir=None, load_test=False, batch_size=16, batch_trim=False, overwrite=False, out_dir=None, split=None, region=None, tier2=False):
+def get_dataloader(in_dir=None, load_test=False, batch_size=16, batch_trim=False, overwrite=False, out_dir=None, split=None):
     '''
     Load pytorch batch data loader only
     '''
@@ -301,17 +274,15 @@ def get_dataloader(in_dir=None, load_test=False, batch_size=16, batch_trim=False
             return True
     
     print('Getting dataset.')
-    if split == 'train' or split == 'random' or split == 'clean':
+    if split == 'train' or split == 'random':
         custom_transforms = train_transform
     elif split == 'test':
         custom_transforms = val_transform
-    else:
-        custom_transforms = val_transform
     dataset = MyDataset(
-        in_dir=in_dir, custom_transforms=custom_transforms, region=region,
-        load_test=load_test, batch_trim=batch_trim, split=split, tier2=tier2
+        in_dir=in_dir, custom_transforms=custom_transforms,
+        load_test=load_test, batch_trim=batch_trim, split=split
         )
-    
+
     # Check if images have been written.
 
     if split=='random':

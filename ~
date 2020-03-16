@@ -14,10 +14,8 @@ import pipeline.criterion as Criterion
 from pipeline.load import get_dataloader
 import pipeline.network as Network
 from datetime import datetime, timedelta
-import FastFCN
-import pdb
-from sklearn.metrics import jaccard_score
-import LovaszSoftmax.pytorch.lovasz_losses as L
+
+
 
 class ObjectView:
     '''
@@ -28,11 +26,6 @@ class ObjectView:
     def __init__(self, d):
         self.__dict__ = d
 
-def layer_gen(model):
-    yield from reversed(list(model.pretrained.layer4.children()))
-    yield from reversed(list(model.pretrained.layer3.children()))
-    yield from reversed(list(model.pretrained.layer2.children()))
-    yield from reversed(list(model.pretrained.layer1.children()))
 
 def save_model(model, experiment_name=None):
     '''
@@ -69,19 +62,16 @@ class EarlyStopping:
         self.val_loss_min = np.Inf
         self.delta = delta
 
-    def __call__(self, val_loss, model, experiment_name, use_lovasz=False):
+    def __call__(self, val_loss, model, experiment_name):
 
-        if use_lovasz:
-            score = val_loss
-        else:
-            score = -val_loss
+        score = -val_loss
 
         if self.best_score is None:
             self.best_score = score
             self.save_checkpoint(val_loss, model, experiment_name)
         elif score < self.best_score + self.delta:
             self.counter += 1
-            print('Validaton Loss={}, best score = {}. \nEarlyStopping counter: {} out of {}'.format(score, self.best_score, self.counter, self.patience))
+            print('Validaton Loss={}, best score = {}. \nEarlyStopping counter: {} out of {}'.format(score, self.bet_score, self.counter, self.patience))
             if self.counter >= self.patience:
                 self.early_stop = True
         else:
@@ -115,9 +105,7 @@ def train_fastfcn_mod(
 
     if options is None:
         options = {
-            'use_jaccard': True,
-            'use_lovasz': True,
-            'early_stopping': True,
+            'early_stopping': False,
             'validation': True,
             'model': 'encnet', # model name (default: encnet)
             'backbone': 'resnet50', # backbone name (default: resnet50)
@@ -131,19 +119,17 @@ def train_fastfcn_mod(
             'train_split':'train', # 'dataset train split (default: train)'
 
             # training hyper params
-            'aux': False, # 'Auxilary Loss'e
+            'aux': True, # 'Auxilary Loss'
             'aux_weight': 0.2, # 'Auxilary loss weight (default: 0.2)'
-            'se_loss': False, # 'Semantic Encoding Loss SE-loss'
+            'se_loss': True, # 'Semantic Encoding Loss SE-loss'
             'se_weight': 0.2, # 'SE-loss weight (default: 0.2)'
-            'epochs': num_epochs, # 'number of epochs to train (default: auto)'
+            'epochs': None, # 'number of epochs to train (default: auto)'
             'start_epoch': 0, # 'start epochs (default:0)'
             'batch_size': batch_size, # 'input batch size for training (default: auto)'
             'test_batch_size': None, # 'input batch size for testing (default: same as batch size)'
 
             # optimizer params
-            'optimizer': 'sgd',
-            'lovasz_hinge': True,
-            'lr': 0.01, # 'learning rate (default: auto)'
+            'lr': None, # 'learning rate (default: auto)'
             'lr_scheduler': 'poly', # 'learning rate scheduler (default: poly)'
             'momentum': 0.9, # 'momentum (default: 0.9)'
             'weight_decay': 1e-4, # 'w-decay (default: 1e-4)'
@@ -173,95 +159,63 @@ def train_fastfcn_mod(
     model_args = ObjectView(options)
     
     train_dataloader = get_dataloader(
-            in_dir=train_path, load_test=False, batch_size=batch_size, batch_trim=batch_trim, split='train', 
-            tier2=tier2
+        in_dir=train_path, load_test=False, batch_size=batch_size//2, batch_trim=batch_trim, split='train'
         )
-
     if model_args.validation:
         val_dataloader = get_dataloader(
-                in_dir=train_path, load_test=False, batch_size=4, batch_trim=batch_trim, split='test'
+            in_dir=train_path, load_test=False, batch_size=batch_size//2, batch_trim=batch_trim, split='test'
         )
 
     device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
     # Compile modified FastFCN model.
     model = Network.get_model(model_args)
     model.to(device)
-    # Optimizer
+
+    # Optimizer (Adam)
     params = [p for p in model.parameters() if p.requires_grad]
+    optimizer = torch.optim.Adam(params, lr=0.0005, weight_decay=0.0005)
+
+    # Larning rate scheduler
+    lr_scheduler = torch.optim.lr_scheduler.StepLR(
+        optimizer, step_size=2, gamma=0.5
+        )
+
+    # Loss Function (Segmentation Loss)
+    criterion = Criterion.SegmentationLosses(
+        se_loss=model_args.se_loss, aux=model_args.aux, nclass=2,
+        se_weight=model_args.se_weight, aux_weight=model_args.aux_weight
+        )
+
+    # # Loss Function (Lovasz Hinge)
+    # criterion = Criteron.SegmentationLosses(
+    #     se_loss=args.se_loss, aux=args.aux, nclass=2,
+    #     se_weight=args.se_weight, aux_weight=args.aux_weight
+    #     )
     
-    if model_args.optimizer == 'adam':
-        # ADAM
-        optimizer = torch.optim.Adam(params, lr=0.0005, weight_decay=0.0005)
-    elif model_args.optimizer == 'sgd':
-        optimizer = torch.optim.SGD(params, lr=model_args.lr,
-                            momentum=model_args.momentum, weight_decay=model_args.weight_decay)
-
-    # Learning rate scheduler
-    # lr_scheduler = torch.optim.lr_scheduler.StepLR(
-    #    optimizer, step_size=2, gamma=0.5
-    #    )
-
-    lr_scheduler = FastFCN.encoding.utils.LR_Scheduler(model_args.lr_scheduler, model_args.lr, 
-            model_args.epochs, len(train_dataloader))
-
-
-    if model_args.use_lovasz:
-        # Loss Function (Lovasz Hinge)
-        criterion = L.lovasz_hinge
-
-    else:
-        # Loss Function (Segmentation Loss)
-        criterion = Criterion.SegmentationLosses(
-            se_loss=model_args.se_loss, aux=model_args.aux, nclass=2,
-            se_weight=model_args.se_weight, aux_weight=model_args.aux_weight
-            )
-
     if model_args.early_stopping:
-        early_stopper = EarlyStopping(patience=10, verbose=True)
+        early_stopper = EarlyStopping(patience=7, verbose=True)
 
-    bottom_up_layers = layer_gen(model)
-
-    
-    best_pred = 0.0
     for epoch in range(num_epochs):  # loop over the dataset multiple times
-
-        if epoch>0:
-            unfreeze_layer = next(bottom_up_layers)
-            grp = {'params': unfreeze_layer.parameters()}
-            optimizer.add_param_group(grp)
-
-
-    
 
         if model_args.early_stopping:
             if early_stopper.early_stop:
                 break
 
         train_loss = 0.0
-        model.train()
-        
-        for i, (images, masks, _) in enumerate(train_dataloader, 0):
-            
-            # Set learning rate first time
-            lr_scheduler(optimizer, i, epoch, best_pred)
 
+        for i, (images, targets, img_names) in enumerate(train_dataloader, 0):
             images = images.to(device)
-            masks = masks.to(device).squeeze(1).round().long()
+            targets = targets.to(device).squeeze(1).round().long()
 
             # get the inputs; data is a list of [inputs, labels]
-            masks.requires_grad = False
+            targets.requires_grad = False
             
             # zero the parameter gradients
             optimizer.zero_grad()
 
             # forward + backward + optimize
             outputs = model(images)
-
-            if model_args.use_lovasz:
-                loss = criterion(outputs[0], masks)
-            else:
-                loss = criterion(*outputs, masks)
-
+            loss = criterion(*outputs, targets)
             loss.backward()
             optimizer.step()
 
@@ -269,11 +223,11 @@ def train_fastfcn_mod(
             train_loss += loss.item()
 
             if i % reporting_int == 0:    # print every 2000 mini-batches
-                print('[%d, %5d] loss/batch: %.3f' %
+                print('[%d, %5d] loss: %.3f' %
                     (epoch + 1, i + 1, train_loss / reporting_int))
                 train_loss = 0.0
-    
-        #lr_scheduler.step()
+
+            lr_scheduler.step()
 
         # Calculation Validation Loss
 
@@ -284,52 +238,28 @@ def train_fastfcn_mod(
             with torch.no_grad():
                 model.eval()
                 val_loss = 0
+                for i, (images, targets, img_names) in enumerate(val_dataloader):
+                    images = images.to(device)
+                    targets = targets.to(device).squeeze(1).round().long()
 
-                val_len = 0
-                for i, (images, masks, _) in enumerate(val_dataloader):
-                    
-                    if model_args.use_jaccard:
-                        images = images.to(device)
-                        images.requires_grad=False
-                        outputs = model(images)
+                    # get the inputs; data is a list of [inputs, labels]
+                    images.requires_grad=False
+                    targets.requires_grad=False
 
-                        outputs = (outputs[0]>0).long().data
-                        masks = masks.to(device)
-
-                        loss = L.iou_binary(outputs, masks)
-                        assert type(loss) == float
-                        val_loss += loss
-                        
-                    else:
-                        images = images.to(device)
-                        masks = masks.to(device).squeeze(1).round().long()
-                        
-                        # get the inputs; data is a list of [inputs, labels]
-                        images.requires_grad=False
-                        masks.requires_grad=False
-
-                        outputs = model(images)
-                        loss = criterion(*outputs, masks)
-                        
-                        val_loss += loss.item()
-
-                    val_len = i
-
-                # --- end of data iteration -------
-                print("Mean val loss per batch:", val_loss / val_len)
+                    outputs = model(images)
+                    loss = criterion(*outputs, targets)
+                    val_loss += loss.item()
                 
-                if best_pred == 0:
-                    best_pred = val_loss
-                elif val_loss < best_pred:
-                    best_pred = val_loss
-
+                # --- end of data iteration -------
+                print("Validation loss calculated:", val_loss)
+                
             if model_args.early_stopping:
                 # Check for early stopping conditions:
-                early_stopper(val_loss, model, experiment_name, use_lovasz=model_args.use_lovasz)
+                early_stopper(val_loss, model, experiment_name)
+
 
         # --- Save model if not using early stopping ----
         if not model_args.early_stopping:
-            
             save_model(model, experiment_name=experiment_name + '_chkpt')
             print('Checkpoint saved at epoch,', epoch+1)
 
@@ -368,9 +298,6 @@ if __name__=='__main__':
     TRAIN_PARSER.add_argument(
         '-batch_trim', default=None, type=int, required=False,
         help='Option to only train for a limit number of batches in each epoch.')
-    TRAIN_PARSER.add_argument(
-        '-tier2', default=None, type=bool, required=False,
-        help='whether or not to train on tier 2 data')
 
     PARSED_ARGS = PARSER.parse_args()
     print('Args:\n', PARSED_ARGS)
@@ -379,6 +306,5 @@ if __name__=='__main__':
         train_fastfcn_mod(
             num_epochs=PARSED_ARGS.epochs, reporting_int=PARSED_ARGS.report,
             batch_size=PARSED_ARGS.batch_size, experiment_name=PARSED_ARGS.name,
-            train_path=PARSED_ARGS.train_path, batch_trim=PARSED_ARGS.batch_trim, 
-            tier2= PARSED_ARGS.tier2
+            train_path=PARSED_ARGS.train_path, batch_trim=PARSED_ARGS.batch_trim
             )
