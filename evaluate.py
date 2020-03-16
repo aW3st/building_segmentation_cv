@@ -141,7 +141,7 @@ def load_model_with_weights(model_name=None, num_epochs=8, batch_size=16, use_lo
 def output_to_pred_imgs(output, dim=0, use_lovasz=False):
     
     if use_lovasz:
-        np_pred = (output>0).squeeze().cpu().numpy()
+        np_pred = (output>-0.25).squeeze().cpu().numpy()
     else:
         np_pred = torch.max(output, dim=dim)[1].cpu().numpy()
     
@@ -211,7 +211,7 @@ def predict_test_set(model, model_name, overwrite=False, use_lovasz=False):
 
     return None
 
-def predict_custom(model, model_name, in_dir, out_dir, overwrite=False):
+def predict_custom(model, model_name, in_dir, out_dir, overwrite=False, use_lovasz=True):
     '''
     Predict for the entire submission set.
     '''
@@ -219,7 +219,7 @@ def predict_custom(model, model_name, in_dir, out_dir, overwrite=False):
         out_dir = 'models/{}/validation_samples'.format(model_name)
 
     test_dataloader = get_dataloader(
-        in_dir=in_dir, batch_size=4, 
+        in_dir=in_dir, batch_size=8, 
         overwrite=overwrite, out_dir=out_dir
         )
 
@@ -233,7 +233,7 @@ def predict_custom(model, model_name, in_dir, out_dir, overwrite=False):
     model.eval()
 
     if not os.path.exists('{}/{}'.format(out_dir, model_name)):
-        os.makedirs(image_out_path)
+        os.makedirs(out_dir+'/'+model_name)
 
     print('Beginning Prediction Loop')
     tbar = tqdm(test_dataloader)
@@ -243,7 +243,7 @@ def predict_custom(model, model_name, in_dir, out_dir, overwrite=False):
         # Load tensors to GPU
             images = images.to(device)
 
-            outputs = model(image_tensors)[0]
+            outputs = model(images)[0]
         # Predict on image tensors
             predict_imgs = [output_to_pred_imgs(output, use_lovasz=use_lovasz) for output in outputs]
 
@@ -359,8 +359,8 @@ if __name__=='__main__':
     elif custom_args.command =='custom':
         MODEL = load_model_with_weights(model_name=custom_args.model_name)
         MODEL.eval()
-        predict_custom(model=MODEL, model_name='11-03-2020_12-11__full_lovasz_trial_chkpt', in_dir=custom_args.in_dir, 
-                out_dir='training_data')
+        predict_custom(model=MODEL, model_name=custom_args.model_name, in_dir=custom_args.in_dir, 
+                out_dir=custom_args.out_dir)
     
     elif custom_args.command =='region':
         MODEL = load_model_with_weights(model_name=custom_args.model_name, use_lovasz=True, se_loss=False, aux=False)
